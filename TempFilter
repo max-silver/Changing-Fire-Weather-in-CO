@@ -1,0 +1,30 @@
+Filtering out erroneous readings
+
+```{r}
+temp.file <- read.csv('FILENAME.csv')
+colnames(temp.file)[1] = "Date"
+colnames(temp.file)[3] = "TempC_2m"
+colnames(temp.file)[4] = "Dew_Point"
+colnames(temp.file)[5] = "RH"
+colnames(temp.file)[6] = "WindMS_2m"
+colnames(temp.file)[7] = "WindMS_5m"
+colnames(temp.file)[8] = "WindMS_10m"
+colnames(temp.file)[9] = "WindMS_20m"
+colnames(temp.file)[10] = "WindMS_50m"
+colnames(temp.file)[11] = "WindMS_80m"
+```
+
+```{r}
+vpd.file <- temp.file[,1:5] %>%
+  mutate(ObsErr = ifelse(TempC_2m < 46 & TempC_2m > -273, 0, 1)) %>%
+  mutate(VPD.hPa_2m = 6.113*exp(5423*(1/273.15 - 1/(TempC_2m + 273.15))) - 0.6113*exp(5423*(1/273.15 - 1/(Dew_Point + 273.15))))
+
+vpd.file$LocErr <- 0
+for (i in 6:nrow(vpd.file)) {
+  vpd.file$LocErr[i] = ifelse(any(vpd.file$ObsErr[(i-5):(i+5)] == 1), 1, 0)
+}
+```
+
+```{r}
+write.csv(vpd.file, 'VPD-TITLE.csv')
+```
