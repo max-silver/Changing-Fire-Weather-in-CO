@@ -1,0 +1,70 @@
+R Markdown File
+Sustained Wind 
+This file will read a data frame of wind speeds and return the sustained wind speed over a 2-minute time period. 
+
+```{r}
+wind.file <- read.csv('FILENAME.csv')
+
+colnames(wind.file)[1] = "Date"
+colnames(wind.file)[3] = "TempC_2m"
+colnames(wind.file)[4] = "Dew_Point"
+colnames(wind.file)[5] = "RH"
+colnames(wind.file)[6] = "WindMS_2m"
+colnames(wind.file)[7] = "WindMS_5m"
+colnames(wind.file)[8] = "WindMS_10m"
+colnames(wind.file)[9] = "WindMS_20m"
+colnames(wind.file)[10] = "WindMS_50m"
+colnames(wind.file)[11] = "WindMS_80m"
+```
+
+```{r}
+allwind <- cbind(wind.file$Date, wind.file$WindMS_2m, wind.file$WindMS_5m, wind.file$WindMS_10m, wind.file$WindMS_20m, wind.file$WindMS_50m, wind.file$WindMS_80m, data.frame(matrix(NA, nrow = nrow(wind.file), ncol = 6)))
+colnames(allwind) = c('Date', 'WindMS_2m', "WindMS_5m", 'WindMS_10m', 'WindMS_20m', 'WindMS_50m', 'WindMS_80m','Smax2m', 'Smax5m', 'Smax10m','Smax20m','Smax50m','Smax80m')
+```
+
+```{r}
+for (i in 2:nrow(allwind)) {
+  if (allwind$WindMS_2m[i] >= allwind$WindMS_2m[i-1])  {
+    allwind$Smax2m[i]  = allwind$WindMS_2m[i-1]}
+  if (allwind$WindMS_2m[i] <= allwind$WindMS_2m[i-1]){
+    allwind$Smax2m[i] = allwind$WindMS_2m[i]}
+  
+  if (allwind$WindMS_5m[i] >= allwind$WindMS_5m[i-1])  {
+    allwind$Smax5m[i]  = allwind$WindMS_5m[i-1]}
+  if (allwind$WindMS_5m[i] <= allwind$WindMS_5m[i-1]){
+    allwind$Smax5m[i] = allwind$WindMS_5m[i]}
+  
+  if (allwind$WindMS_10m[i] >= allwind$WindMS_10m[i-1])  {
+    allwind$Smax10m[i]  = allwind$WindMS_10m[i-1]}
+  if (allwind$WindMS_10m[i] <= allwind$WindMS_10m[i-1]){
+    allwind$Smax10m[i] = allwind$WindMS_10m[i]}
+  
+  if (allwind$WindMS_20m[i] >= allwind$WindMS_20m[i-1])  {
+    allwind$Smax20m[i]  = allwind$WindMS_20m[i-1]}
+  if (allwind$WindMS_20m[i] <= allwind$WindMS_20m[i-1]){
+    allwind$Smax20m[i] = allwind$WindMS_20m[i]}
+  
+  if (allwind$WindMS_50m[i] >= allwind$WindMS_50m[i-1])  {
+    allwind$Smax50m[i]  = allwind$WindMS_50m[i-1]}
+  if (allwind$WindMS_50m[i] <= allwind$WindMS_50m[i-1]){
+    allwind$Smax50m[i] = allwind$WindMS_50m[i]}
+  
+  if (allwind$WindMS_80m[i] >= allwind$WindMS_80m[i-1])  {
+    allwind$Smax80m[i]  = allwind$WindMS_80m[i-1]}
+  if (allwind$WindMS_80m[i] <= allwind$WindMS_80m[i-1]){
+    allwind$Smax80m[i] = allwind$WindMS_80m[i]}
+  }
+```
+
+```{r}
+allwind$Smax2m[1] = 0 
+allwind$Smax5m[1] = 0 
+allwind$Smax10m[1] = 0
+allwind$Smax20m[1] = 0
+allwind$Smax50m[1] = 0
+allwind$Smax80m[1] = 0
+```
+
+```{r}
+write.csv(allwind, 'TITLE.csv')
+```
