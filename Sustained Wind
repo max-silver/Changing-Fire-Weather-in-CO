@@ -66,5 +66,5 @@ allwind$Smax80m[1] = 0
 ```
 
 ```{r}
-write.csv(allwind, 'TITLE.csv')
+write.csv(allwind, 'WIND-TITLE.csv')
 ```
