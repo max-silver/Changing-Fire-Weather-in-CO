@@ -1,0 +1,41 @@
+```{r}
+library('ncdf4')
+```
+
+```{r}
+tower <- nc_open('CO1940.nc')
+tower_u100 <- ncvar_get(tower, 'u100')[16, 5,] #all u100 values for the tower coordinates 
+tower_v100 <- ncvar_get(tower, 'v100')[16, 5,] #etc
+tower_u10 <- ncvar_get(tower, 'u10')[16, 5,]
+tower_v10 <- ncvar_get(tower, 'v10')[16, 5,]
+```
+
+```{r}
+df.tower <- data.frame(matrix(nrow = 366*24, ncol = 5))
+colnames(df.tower) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+df.tower$time1 = ncvar_get(tower, "time")
+df.tower$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+df.tower$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+df.tower$dew_point = ncvar_get(tower, 'd2m')[16, 5,]
+df.tower$temp = ncvar_get(tower, 't2m')[16, 5,]
+```
+
+```{r}
+df.tower2 <- df.tower %>%
+  mutate(time2 = time1 - 1069440) %>%
+  mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+  mutate(day = floor(time2/24) + 1) %>%
+  mutate(hour = time2 %% 24) %>%
+  mutate(max_wind = pmax(wind10, wind100)) %>%
+  mutate(HDWI = VPD_hPa*max_wind) %>%
+  mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+  select(-time2, -day, -time1)
+```
+
+```{r}
+HDWI.reanalysis <- df.tower2 %>% group_by(date) %>% summarize_at(c('VPD_hPa','HDWI','max_wind'),max)
+```
+
+```{r}
+write.csv(HDWI.reanalysis, 'REANALYSIS-HDWI-TITLE.csv')
+```
