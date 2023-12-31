@@ -7,8 +7,8 @@ library(reshape2)
 ```
 
 ```{r}
-obs <- read.csv('x02_22obsdailyHDWI.csv')
-re <- read.csv('x02_22redailyHDWI.csv')
+obs <- read.csv('OBSERVATIONAL-HDWI-TITLE.csv')
+re <- read.csv('REANALYSIS-HDWI-TITLE.csv')
 ```
 
 ```{r}
