@@ -1,0 +1,167 @@
+```{r}
+library(ggplot2)
+library(TSstudio)
+library(fume)
+library(dplyr)
+library(reshape2)
+```
+
+```{r}
+obs <- read.csv('x02_22obsdailyHDWI.csv')
+re <- read.csv('x02_22redailyHDWI.csv')
+```
+
+```{r}
+obs.ts <- ts(obs$HDW,start=c(2002,1,1),frequency=365.25)
+re.ts <- ts(re$HDWI,start=c(1940,1,1),frequency=365.25)
+re21.ts <- ts(re$HDWI[22647:30316],start=c(2002,1,1),frequency=365.25)
+```
+
+```{r}
+obs_trend <- as.data.frame(decompose(obs.ts)$trend)
+re_trend <- as.data.frame(decompose(re.ts)$trend)
+
+
+obs_trend$date <- obs$Date
+obs_trend$index <- 1:7670
+
+re_trend$date <- re$date
+re_trend$index <- 1:30316
+
+re21_trend <- as.data.frame(decompose(re21.ts)$trend)
+re21_trend$date <- obs$date
+re21_trend$index <- 1:7670
+```
+
+```{r}
+mmkh(as.vector(na.omit(obs_trend$x)))
+```
+
+```{r}
+mmkh(as.vector(na.omit(re_trend$x)))
+```
+
+```{r}
+mmkh(as.vector(na.omit(re21_trend$x)))
+```
+
+**DECOMP GRAPHS**
+
+```{r}
+obs.graph <- data.frame(matrix(nrow = 7670, ncol = 5))
+colnames(obs.graph) <- c('Observed', 'Trend', 'Seasonal', 'Random', 'Date')
+obs.graph$Observed <- decompose(obs.ts)$x
+obs.graph$Trend <- decompose(obs.ts)$trend
+obs.graph$Seasonal <- decompose(obs.ts)$seasonal
+obs.graph$Random <- decompose(obs.ts)$random
+obs.graph$Date <- obs$Date
+```
+
+```{r}
+re21.graph <- data.frame(matrix(nrow = 7670, ncol = 5))
+colnames(re21.graph) <- c('Observed', 'Trend', 'Seasonal', 'Random', 'Date')
+re21.graph$Observed <- decompose(re21.ts)$x
+re21.graph$Trend <- decompose(re21.ts)$trend
+re21.graph$Seasonal <- decompose(re21.ts)$seasonal
+re21.graph$Random <- decompose(re21.ts)$random
+re21.graph$Date <- obs$Date
+```
+
+```{r}
+re.graph <- data.frame(matrix(nrow = 30316, ncol = 5))
+colnames(re.graph) <- c('Observed', 'Trend', 'Seasonal', 'Random', 'Date')
+re.graph$Observed <- decompose(re.ts)$x
+re.graph$Trend <- decompose(re.ts)$trend
+re.graph$Seasonal <- decompose(re.ts)$seasonal
+re.graph$Random <- decompose(re.ts)$random
+re.graph$Date <- re$date
+```
+
+```{r}
+obs.graph$index <- 1:7670
+re21.graph$index <- 1:7670
+re.graph$index <- 1:30316
+```
+
+```{r}
+ggplot(data = obs.graph, aes(y = as.numeric(Trend), x = index)) + geom_line() + theme_bw() + 
+  scale_x_continuous(breaks = c(0+183, 730+183, 1461+183, 2191+183, 2922+183, 3652+183, 4383+183, 5113+183, 5844+183, 6574+183, 7305+183), lim = c(0, 7670), labels = seq(2002, 2022, 2)) +
+  theme_bw() + 
+  labs(x="Year", y = "Trend", color = NULL) +
+  ggtitle('Decomposed Daily Observational HDWI (Trend)') +
+  stat_smooth(method = 'loess', aes(color = 'p = 0.6311'), size = .9, se = F) + scale_color_manual(values = 'blue') + 
+  theme(legend.position="bottom", legend.margin=margin(-10,0,0,0))
+```
+
+```{r}
+ggplot(data = re21.graph, aes(y = as.numeric(Trend), x = index)) + geom_line() + theme_bw() + 
+  scale_x_continuous(breaks = c(0+183, 730+183, 1461+183, 2191+183, 2922+183, 3652+183, 4383+183, 5113+183, 5844+183, 6574+183, 7305+183), lim = c(0, 7670), labels = seq(2002, 2022, 2)) +
+  theme_bw() + 
+  labs(x="Year", y = "Trend", color = NULL) +
+  ggtitle('Decomposed Daily Reanalysis HDWI (Trend)') +
+  stat_smooth(method = 'loess', aes(color = paste('p ', '\U2248', ' 0')), size = .9, se = F) + scale_color_manual(values = 'blue') + 
+  theme(legend.position="bottom", legend.margin=margin(-10,0,0,0))
+```
+
+```{r}
+ggplot(data = re.graph, aes(y = as.numeric(Trend), x = index)) + geom_line(size = 0.75) + theme_bw() + 
+  scale_x_continuous(breaks = seq(183, 30134, 730.5*2.5), lim = c(0, 30316), labels = seq(1940, 2022, 5), minor_breaks = NULL) +
+  theme_bw() + 
+  labs(x="Year", y = "Trend", color = NULL) +
+  ggtitle('Decomposed Daily Reanalysis HDWI (Trend)') +
+  stat_smooth(method = 'loess', aes(color = 'p = 0.0032'), size = .75, se = F) + scale_color_manual(values = 'blue') + 
+  theme(legend.position="bottom", legend.margin=margin(-10,0,0,0))
+```
+
+```{r}
+cor(na.omit(obs.graph$Trend), na.omit(re21.graph$Trend), method = 'spearman')
+
+ggplot() + geom_line(data = obs.graph, aes(x = 1:7670, y = Trend, color = 'Observational Data')) + 
+scale_y_continuous("Observational Trend", sec.axis = sec_axis(~ ./2.1 - 60/2.1, name = "Reanalysis Trend"), n.breaks = 6) +
+geom_line(data = re21.graph, aes(x = 1:7670, y = 2.1*Trend + 60, color = 'Reanalysis Data'), alpha = 0.8) +
+  theme_bw() + 
+  ggtitle('Observational and Reanalysis Daily Trend') + 
+  geom_label(aes(label = paste('\U03C1', ' = .670'),
+                  x = 4000, y = 250, 
+                  box.padding   = 0.35, 
+                  point.padding = 0.5,
+                  segment.color = 'grey50')) + 
+  scale_x_continuous(breaks = c(0+183, 730+183, 1461+183, 2191+183, 2922+183, 3652+183, 4383+183, 5113+183, 5844+183, 6574+183, 7305+183), lim = c(0, 7670), labels = seq(2002, 2022, 2)) +
+  scale_color_manual(values = c('dimgray', 'darkred')) + labs(color = NULL, x = 'Year') + theme(legend.key.size = unit(4, 'mm'))
+```
+
+```{r}
+obs.melt <- melt(select(obs.graph, -Date), id.var = 'index') %>% mutate(value = as.numeric(value))
+```
+
+```{r fig.size  = 20}
+ggplot(data = obs.melt, aes(x = index, y = value))+ geom_line() + facet_grid(rows = vars(variable), scales = 'free') + 
+  scale_x_continuous(breaks = c(0+183, 730+183, 1461+183, 2191+183, 2922+183, 3652+183, 4383+183, 5113+183, 5844+183, 6574+183, 7305+183), lim = c(0, 7670), labels = seq(2002, 2022, 2), expand = c(0.01, 0.01)) +
+  theme_bw() + 
+  labs(x="Year") +
+  ggtitle('Decomposed Daily Observational HDWI (2002 - 2022)') 
+```
+
+```{r}
+re21.melt <- melt(select(re21.graph, -Date), id.var = 'index') %>% mutate(value = as.numeric(value))
+```
+
+```{r fig.size  = 20}
+ggplot(data = re21.melt, aes(x = index, y = value))+ geom_line() + facet_grid(rows = vars(variable), scales = 'free') + 
+  scale_x_continuous(breaks = c(0+183, 730+183, 1461+183, 2191+183, 2922+183, 3652+183, 4383+183, 5113+183, 5844+183, 6574+183, 7305+183), lim = c(0, 7670), labels = seq(2002, 2022, 2), expand = c(0.01, 0.01)) +
+  theme_bw() + 
+  labs(x="Year") +
+  ggtitle('Decomposed Daily Reanalysis HDWI (2002 - 2022)') 
+```
+
+```{r}
+re.melt <- melt(select(re.graph, -Date), id.var = 'index') %>% mutate(value = as.numeric(value))
+```
+
+```{r fig.size  = 20}
+ggplot(data = re.melt, aes(x = index, y = value))+ geom_line() + facet_grid(rows = vars(variable), scales = 'free') + 
+  scale_x_continuous(breaks = seq(183, 30134, 730.5*2.5), lim = c(0, 30316), labels = seq(1940, 2022, 5), minor_breaks = NULL, expand = c(0.008, 0.01)) +
+  theme_bw() + 
+  labs(x="Year") +
+  ggtitle('Decomposed Daily Reanalysis HDWI (1940 - 2022)') 
+```
