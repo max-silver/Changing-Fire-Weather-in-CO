@@ -37,7 +37,7 @@ hdw <- maxwind %>%
   mutate(VPD_2m_hPa = daily.vpd$VPD_hPa) %>%
   mutate(HDWI = round(DailyMax*VPD_2m_hPa, 2)) %>%
   dplyr::select('Date', 'DailyMax', 'VPD_2m_hPa', 'HDWI')
-hdwi.data <- hdw02[order(as.Date(hdw02$Date, format="%m/%d/%Y")),]
+hdwi.data <- hdw[order(as.Date(hdw02$Date, format="%m/%d/%Y")),]
 ```
 
 ```{r}
