@@ -21,6 +21,7 @@ df.tower$dew_point = ncvar_get(tower, 'd2m')[16, 5,]
 df.tower$temp = ncvar_get(tower, 't2m')[16, 5,]
 ```
 
+
 ```{r}
 df.tower2 <- df.tower %>%
   mutate(time2 = time1 - 1069440) %>%
@@ -28,13 +29,12 @@ df.tower2 <- df.tower %>%
   mutate(day = floor(time2/24) + 1) %>%
   mutate(hour = time2 %% 24) %>%
   mutate(max_wind = pmax(wind10, wind100)) %>%
-  mutate(HDWI = VPD_hPa*max_wind) %>%
   mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
   select(-time2, -day, -time1)
 ```
 
 ```{r}
-HDWI.reanalysis <- df.tower2 %>% group_by(date) %>% summarize_at(c('VPD_hPa','HDWI','max_wind'),max)
+HDWI.reanalysis <- df.tower2 %>% group_by(date) %>% summarize_at(c('VPD_hPa', 'max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
 ```
 
 ```{r}
