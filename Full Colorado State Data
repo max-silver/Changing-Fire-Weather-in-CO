@@ -1,0 +1,4281 @@
+```{r}
+library('ncdf4')
+library(reshape2)
+library(dplyr)
+library(tidyr)
+```
+
+```{r}
+q95 <- function(x) {
+  return(quantile(x, .95))
+  }
+q75 <- function(x) {
+  return(quantile(x, .75))
+}
+q25 <- function(x) {
+  return(quantile(x, .25))
+  }
+q05 <- function(x) {
+  return(quantile(x, .05))
+}
+```
+
+```{r}
+CO_jan <- array(0, dim = c(17,29,83), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25), NULL))
+CO_feb <- array(0, dim = c(17,29,83), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25), NULL))
+CO_mar <- array(0, dim = c(17,29,83), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25), NULL))
+CO_apr <- array(0, dim = c(17,29,83), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25), NULL))
+CO_may <- array(0, dim = c(17,29,83), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25), NULL))
+CO_jun <- array(0, dim = c(17,29,83), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25), NULL))
+CO_jul <- array(0, dim = c(17,29,83), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25), NULL))
+CO_aug <- array(0, dim = c(17,29,83), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25), NULL))
+CO_sep <- array(0, dim = c(17,29,83), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25), NULL))
+CO_oct <- array(0, dim = c(17,29,83), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25), NULL))
+CO_nov <- array(0, dim = c(17,29,83), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25), NULL))
+CO_dec <- array(0, dim = c(17,29,83), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25), NULL))
+```
+
+Year 1940
+
+```{r}
+tower1940 <- nc_open('CO1940.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1940, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1940, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1940, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1940, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1940, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1940, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1940, 't2m')[i, j,]
+
+    data1940 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1940 <- separate(data1940, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1940)
+
+  CO_jan[j, i, 1] = HDWI_1940$HDWI[1]
+  CO_feb[j, i, 1] = HDWI_1940$HDWI[2]
+  CO_mar[j, i, 1] = HDWI_1940$HDWI[3]
+  CO_apr[j, i, 1] = HDWI_1940$HDWI[4]
+  CO_may[j, i, 1] = HDWI_1940$HDWI[5]
+  CO_jun[j, i, 1] = HDWI_1940$HDWI[6]
+  CO_jul[j, i, 1] = HDWI_1940$HDWI[7]
+  CO_aug[j, i, 1] = HDWI_1940$HDWI[8]
+  CO_sep[j, i, 1] = HDWI_1940$HDWI[9]
+  CO_oct[j, i, 1] = HDWI_1940$HDWI[10]
+  CO_nov[j, i, 1] = HDWI_1940$HDWI[11]
+  CO_dec[j, i, 1] = HDWI_1940$HDWI[12]
+  }
+}
+```
+
+Year 1941
+
+```{r}
+tower1941 <- nc_open('CO1941.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1941, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1941, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1941, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1941, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1941, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1941, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1941, 't2m')[i, j,]
+
+    data1941 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1941 <- separate(data1941, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1941)
+
+  CO_jan[j, i, 2] = HDWI_1941$HDWI[1]
+  CO_feb[j, i, 2] = HDWI_1941$HDWI[2]
+  CO_mar[j, i, 2] = HDWI_1941$HDWI[3]
+  CO_apr[j, i, 2] = HDWI_1941$HDWI[4]
+  CO_may[j, i, 2] = HDWI_1941$HDWI[5]
+  CO_jun[j, i, 2] = HDWI_1941$HDWI[6]
+  CO_jul[j, i, 2] = HDWI_1941$HDWI[7]
+  CO_aug[j, i, 2] = HDWI_1941$HDWI[8]
+  CO_sep[j, i, 2] = HDWI_1941$HDWI[9]
+  CO_oct[j, i, 2] = HDWI_1941$HDWI[10]
+  CO_nov[j, i, 2] = HDWI_1941$HDWI[11]
+  CO_dec[j, i, 2] = HDWI_1941$HDWI[12]
+  }
+}
+```
+
+Year 1942
+
+```{r}
+tower1942 <- nc_open('CO1942.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1942, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1942, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1942, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1942, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1942, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1942, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1942, 't2m')[i, j,]
+
+    data1942 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1942 <- separate(data1942, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1942)
+
+  CO_jan[j, i, (1942-1939)] = HDWI_1942$HDWI[1]
+  CO_feb[j, i, (1942-1939)] = HDWI_1942$HDWI[2]
+  CO_mar[j, i, (1942-1939)] = HDWI_1942$HDWI[3]
+  CO_apr[j, i, (1942-1939)] = HDWI_1942$HDWI[4]
+  CO_may[j, i, (1942-1939)] = HDWI_1942$HDWI[5]
+  CO_jun[j, i, (1942-1939)] = HDWI_1942$HDWI[6]
+  CO_jul[j, i, (1942-1939)] = HDWI_1942$HDWI[7]
+  CO_aug[j, i, (1942-1939)] = HDWI_1942$HDWI[8]
+  CO_sep[j, i, (1942-1939)] = HDWI_1942$HDWI[9]
+  CO_oct[j, i, (1942-1939)] = HDWI_1942$HDWI[10]
+  CO_nov[j, i, (1942-1939)] = HDWI_1942$HDWI[11]
+  CO_dec[j, i, (1942-1939)] = HDWI_1942$HDWI[12]
+  }
+}
+```
+
+Year 1943
+
+```{r}
+tower1943 <- nc_open('CO1943.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1943, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1943, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1943, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1943, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1943, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1943, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1943, 't2m')[i, j,]
+
+    data1943 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1943 <- separate(data1943, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1943)
+
+  CO_jan[j, i, (1943-1939)] = HDWI_1943$HDWI[1]
+  CO_feb[j, i, (1943-1939)] = HDWI_1943$HDWI[2]
+  CO_mar[j, i, (1943-1939)] = HDWI_1943$HDWI[3]
+  CO_apr[j, i, (1943-1939)] = HDWI_1943$HDWI[4]
+  CO_may[j, i, (1943-1939)] = HDWI_1943$HDWI[5]
+  CO_jun[j, i, (1943-1939)] = HDWI_1943$HDWI[6]
+  CO_jul[j, i, (1943-1939)] = HDWI_1943$HDWI[7]
+  CO_aug[j, i, (1943-1939)] = HDWI_1943$HDWI[8]
+  CO_sep[j, i, (1943-1939)] = HDWI_1943$HDWI[9]
+  CO_oct[j, i, (1943-1939)] = HDWI_1943$HDWI[10]
+  CO_nov[j, i, (1943-1939)] = HDWI_1943$HDWI[11]
+  CO_dec[j, i, (1943-1939)] = HDWI_1943$HDWI[12]
+  }
+}
+```
+
+Year 1944
+
+```{r}
+tower1944 <- nc_open('CO1944.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1944, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1944, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1944, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1944, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1944, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1944, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1944, 't2m')[i, j,]
+
+    data1944 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1944 <- separate(data1944, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1944)
+
+  CO_jan[j, i, (1944-1939)] = HDWI_1944$HDWI[1]
+  CO_feb[j, i, (1944-1939)] = HDWI_1944$HDWI[2]
+  CO_mar[j, i, (1944-1939)] = HDWI_1944$HDWI[3]
+  CO_apr[j, i, (1944-1939)] = HDWI_1944$HDWI[4]
+  CO_may[j, i, (1944-1939)] = HDWI_1944$HDWI[5]
+  CO_jun[j, i, (1944-1939)] = HDWI_1944$HDWI[6]
+  CO_jul[j, i, (1944-1939)] = HDWI_1944$HDWI[7]
+  CO_aug[j, i, (1944-1939)] = HDWI_1944$HDWI[8]
+  CO_sep[j, i, (1944-1939)] = HDWI_1944$HDWI[9]
+  CO_oct[j, i, (1944-1939)] = HDWI_1944$HDWI[10]
+  CO_nov[j, i, (1944-1939)] = HDWI_1944$HDWI[11]
+  CO_dec[j, i, (1944-1939)] = HDWI_1944$HDWI[12]
+  }
+}
+```
+
+Year 1945
+
+```{r}
+tower1945 <- nc_open('CO1945.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1945, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1945, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1945, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1945, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1945, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1945, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1945, 't2m')[i, j,]
+
+    data1945 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1945 <- separate(data1945, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1945)
+
+  CO_jan[j, i, (1945-1939)] = HDWI_1945$HDWI[1]
+  CO_feb[j, i, (1945-1939)] = HDWI_1945$HDWI[2]
+  CO_mar[j, i, (1945-1939)] = HDWI_1945$HDWI[3]
+  CO_apr[j, i, (1945-1939)] = HDWI_1945$HDWI[4]
+  CO_may[j, i, (1945-1939)] = HDWI_1945$HDWI[5]
+  CO_jun[j, i, (1945-1939)] = HDWI_1945$HDWI[6]
+  CO_jul[j, i, (1945-1939)] = HDWI_1945$HDWI[7]
+  CO_aug[j, i, (1945-1939)] = HDWI_1945$HDWI[8]
+  CO_sep[j, i, (1945-1939)] = HDWI_1945$HDWI[9]
+  CO_oct[j, i, (1945-1939)] = HDWI_1945$HDWI[10]
+  CO_nov[j, i, (1945-1939)] = HDWI_1945$HDWI[11]
+  CO_dec[j, i, (1945-1939)] = HDWI_1945$HDWI[12]
+  }
+}
+```
+
+Year 1946
+
+```{r}
+tower1946 <- nc_open('CO1946.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1946, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1946, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1946, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1946, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1946, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1946, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1946, 't2m')[i, j,]
+
+    data1946 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1946 <- separate(data1946, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1946)
+
+  CO_jan[j, i, (1946-1939)] = HDWI_1946$HDWI[1]
+  CO_feb[j, i, (1946-1939)] = HDWI_1946$HDWI[2]
+  CO_mar[j, i, (1946-1939)] = HDWI_1946$HDWI[3]
+  CO_apr[j, i, (1946-1939)] = HDWI_1946$HDWI[4]
+  CO_may[j, i, (1946-1939)] = HDWI_1946$HDWI[5]
+  CO_jun[j, i, (1946-1939)] = HDWI_1946$HDWI[6]
+  CO_jul[j, i, (1946-1939)] = HDWI_1946$HDWI[7]
+  CO_aug[j, i, (1946-1939)] = HDWI_1946$HDWI[8]
+  CO_sep[j, i, (1946-1939)] = HDWI_1946$HDWI[9]
+  CO_oct[j, i, (1946-1939)] = HDWI_1946$HDWI[10]
+  CO_nov[j, i, (1946-1939)] = HDWI_1946$HDWI[11]
+  CO_dec[j, i, (1946-1939)] = HDWI_1946$HDWI[12]
+  }
+}
+```
+
+Year 1947
+
+```{r}
+tower1947 <- nc_open('CO1947.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1947, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1947, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1947, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1947, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1947, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1947, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1947, 't2m')[i, j,]
+
+    data1947 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1947 <- separate(data1947, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1947)
+
+  CO_jan[j, i, (1947-1939)] = HDWI_1947$HDWI[1]
+  CO_feb[j, i, (1947-1939)] = HDWI_1947$HDWI[2]
+  CO_mar[j, i, (1947-1939)] = HDWI_1947$HDWI[3]
+  CO_apr[j, i, (1947-1939)] = HDWI_1947$HDWI[4]
+  CO_may[j, i, (1947-1939)] = HDWI_1947$HDWI[5]
+  CO_jun[j, i, (1947-1939)] = HDWI_1947$HDWI[6]
+  CO_jul[j, i, (1947-1939)] = HDWI_1947$HDWI[7]
+  CO_aug[j, i, (1947-1939)] = HDWI_1947$HDWI[8]
+  CO_sep[j, i, (1947-1939)] = HDWI_1947$HDWI[9]
+  CO_oct[j, i, (1947-1939)] = HDWI_1947$HDWI[10]
+  CO_nov[j, i, (1947-1939)] = HDWI_1947$HDWI[11]
+  CO_dec[j, i, (1947-1939)] = HDWI_1947$HDWI[12]
+  }
+}
+```
+
+Year 1948
+
+```{r}
+tower1948 <- nc_open('CO1948.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1948, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1948, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1948, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1948, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1948, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1948, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1948, 't2m')[i, j,]
+
+    data1948 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1948 <- separate(data1948, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1948)
+
+  CO_jan[j, i, (1948-1939)] = HDWI_1948$HDWI[1]
+  CO_feb[j, i, (1948-1939)] = HDWI_1948$HDWI[2]
+  CO_mar[j, i, (1948-1939)] = HDWI_1948$HDWI[3]
+  CO_apr[j, i, (1948-1939)] = HDWI_1948$HDWI[4]
+  CO_may[j, i, (1948-1939)] = HDWI_1948$HDWI[5]
+  CO_jun[j, i, (1948-1939)] = HDWI_1948$HDWI[6]
+  CO_jul[j, i, (1948-1939)] = HDWI_1948$HDWI[7]
+  CO_aug[j, i, (1948-1939)] = HDWI_1948$HDWI[8]
+  CO_sep[j, i, (1948-1939)] = HDWI_1948$HDWI[9]
+  CO_oct[j, i, (1948-1939)] = HDWI_1948$HDWI[10]
+  CO_nov[j, i, (1948-1939)] = HDWI_1948$HDWI[11]
+  CO_dec[j, i, (1948-1939)] = HDWI_1948$HDWI[12]
+  }
+}
+```
+
+Year 1949
+
+```{r}
+tower1949 <- nc_open('CO1949.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1949, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1949, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1949, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1949, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1949, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1949, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1949, 't2m')[i, j,]
+
+    data1949 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1949 <- separate(data1949, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1949)
+
+  CO_jan[j, i, (1949-1939)] = HDWI_1949$HDWI[1]
+  CO_feb[j, i, (1949-1939)] = HDWI_1949$HDWI[2]
+  CO_mar[j, i, (1949-1939)] = HDWI_1949$HDWI[3]
+  CO_apr[j, i, (1949-1939)] = HDWI_1949$HDWI[4]
+  CO_may[j, i, (1949-1939)] = HDWI_1949$HDWI[5]
+  CO_jun[j, i, (1949-1939)] = HDWI_1949$HDWI[6]
+  CO_jul[j, i, (1949-1939)] = HDWI_1949$HDWI[7]
+  CO_aug[j, i, (1949-1939)] = HDWI_1949$HDWI[8]
+  CO_sep[j, i, (1949-1939)] = HDWI_1949$HDWI[9]
+  CO_oct[j, i, (1949-1939)] = HDWI_1949$HDWI[10]
+  CO_nov[j, i, (1949-1939)] = HDWI_1949$HDWI[11]
+  CO_dec[j, i, (1949-1939)] = HDWI_1949$HDWI[12]
+  }
+}
+```
+
+Year 1950
+
+```{r}
+tower1950 <- nc_open('CO1950.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1950, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1950, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1950, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1950, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1950, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1950, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1950, 't2m')[i, j,]
+
+    data1950 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1950 <- separate(data1950, date, into = c('year', 'month', 'day')) %>% 
+      
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1950)
+
+  CO_jan[j, i, (1950-1939)] = HDWI_1950$HDWI[1]
+  CO_feb[j, i, (1950-1939)] = HDWI_1950$HDWI[2]
+  CO_mar[j, i, (1950-1939)] = HDWI_1950$HDWI[3]
+  CO_apr[j, i, (1950-1939)] = HDWI_1950$HDWI[4]
+  CO_may[j, i, (1950-1939)] = HDWI_1950$HDWI[5]
+  CO_jun[j, i, (1950-1939)] = HDWI_1950$HDWI[6]
+  CO_jul[j, i, (1950-1939)] = HDWI_1950$HDWI[7]
+  CO_aug[j, i, (1950-1939)] = HDWI_1950$HDWI[8]
+  CO_sep[j, i, (1950-1939)] = HDWI_1950$HDWI[9]
+  CO_oct[j, i, (1950-1939)] = HDWI_1950$HDWI[10]
+  CO_nov[j, i, (1950-1939)] = HDWI_1950$HDWI[11]
+  CO_dec[j, i, (1950-1939)] = HDWI_1950$HDWI[12]
+  }
+}
+```
+
+Year 1951
+
+```{r}
+tower1951 <- nc_open('CO1951.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1951, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1951, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1951, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1951, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1951, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1951, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1951, 't2m')[i, j,]
+
+    data1951 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1951 <- separate(data1951, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1951)
+
+  CO_jan[j, i, (1951-1939)] = HDWI_1951$HDWI[1]
+  CO_feb[j, i, (1951-1939)] = HDWI_1951$HDWI[2]
+  CO_mar[j, i, (1951-1939)] = HDWI_1951$HDWI[3]
+  CO_apr[j, i, (1951-1939)] = HDWI_1951$HDWI[4]
+  CO_may[j, i, (1951-1939)] = HDWI_1951$HDWI[5]
+  CO_jun[j, i, (1951-1939)] = HDWI_1951$HDWI[6]
+  CO_jul[j, i, (1951-1939)] = HDWI_1951$HDWI[7]
+  CO_aug[j, i, (1951-1939)] = HDWI_1951$HDWI[8]
+  CO_sep[j, i, (1951-1939)] = HDWI_1951$HDWI[9]
+  CO_oct[j, i, (1951-1939)] = HDWI_1951$HDWI[10]
+  CO_nov[j, i, (1951-1939)] = HDWI_1951$HDWI[11]
+  CO_dec[j, i, (1951-1939)] = HDWI_1951$HDWI[12]
+  }
+}
+```
+
+Year 1952
+
+```{r}
+tower1952 <- nc_open('CO1952.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1952, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1952, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1952, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1952, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1952, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1952, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1952, 't2m')[i, j,]
+
+    data1952 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1952 <- separate(data1952, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1952)
+
+  CO_jan[j, i, (1952-1939)] = HDWI_1952$HDWI[1]
+  CO_feb[j, i, (1952-1939)] = HDWI_1952$HDWI[2]
+  CO_mar[j, i, (1952-1939)] = HDWI_1952$HDWI[3]
+  CO_apr[j, i, (1952-1939)] = HDWI_1952$HDWI[4]
+  CO_may[j, i, (1952-1939)] = HDWI_1952$HDWI[5]
+  CO_jun[j, i, (1952-1939)] = HDWI_1952$HDWI[6]
+  CO_jul[j, i, (1952-1939)] = HDWI_1952$HDWI[7]
+  CO_aug[j, i, (1952-1939)] = HDWI_1952$HDWI[8]
+  CO_sep[j, i, (1952-1939)] = HDWI_1952$HDWI[9]
+  CO_oct[j, i, (1952-1939)] = HDWI_1952$HDWI[10]
+  CO_nov[j, i, (1952-1939)] = HDWI_1952$HDWI[11]
+  CO_dec[j, i, (1952-1939)] = HDWI_1952$HDWI[12]
+  }
+}
+```
+
+Year 1953
+
+```{r}
+tower1953 <- nc_open('CO1953.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1953, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1953, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1953, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1953, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1953, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1953, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1953, 't2m')[i, j,]
+
+    data1953 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1953 <- separate(data1953, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1953)
+
+  CO_jan[j, i, (1953-1939)] = HDWI_1953$HDWI[1]
+  CO_feb[j, i, (1953-1939)] = HDWI_1953$HDWI[2]
+  CO_mar[j, i, (1953-1939)] = HDWI_1953$HDWI[3]
+  CO_apr[j, i, (1953-1939)] = HDWI_1953$HDWI[4]
+  CO_may[j, i, (1953-1939)] = HDWI_1953$HDWI[5]
+  CO_jun[j, i, (1953-1939)] = HDWI_1953$HDWI[6]
+  CO_jul[j, i, (1953-1939)] = HDWI_1953$HDWI[7]
+  CO_aug[j, i, (1953-1939)] = HDWI_1953$HDWI[8]
+  CO_sep[j, i, (1953-1939)] = HDWI_1953$HDWI[9]
+  CO_oct[j, i, (1953-1939)] = HDWI_1953$HDWI[10]
+  CO_nov[j, i, (1953-1939)] = HDWI_1953$HDWI[11]
+  CO_dec[j, i, (1953-1939)] = HDWI_1953$HDWI[12]
+  }
+}
+```
+
+Year 1954
+
+```{r}
+tower1954 <- nc_open('CO1954.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1954, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1954, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1954, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1954, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1954, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1954, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1954, 't2m')[i, j,]
+
+    data1954 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1954 <- separate(data1954, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1954)
+
+  CO_jan[j, i, (1954-1939)] = HDWI_1954$HDWI[1]
+  CO_feb[j, i, (1954-1939)] = HDWI_1954$HDWI[2]
+  CO_mar[j, i, (1954-1939)] = HDWI_1954$HDWI[3]
+  CO_apr[j, i, (1954-1939)] = HDWI_1954$HDWI[4]
+  CO_may[j, i, (1954-1939)] = HDWI_1954$HDWI[5]
+  CO_jun[j, i, (1954-1939)] = HDWI_1954$HDWI[6]
+  CO_jul[j, i, (1954-1939)] = HDWI_1954$HDWI[7]
+  CO_aug[j, i, (1954-1939)] = HDWI_1954$HDWI[8]
+  CO_sep[j, i, (1954-1939)] = HDWI_1954$HDWI[9]
+  CO_oct[j, i, (1954-1939)] = HDWI_1954$HDWI[10]
+  CO_nov[j, i, (1954-1939)] = HDWI_1954$HDWI[11]
+  CO_dec[j, i, (1954-1939)] = HDWI_1954$HDWI[12]
+  }
+}
+```
+
+Year 1955
+
+```{r}
+tower1955 <- nc_open('CO1955.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1955, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1955, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1955, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1955, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1955, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1955, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1955, 't2m')[i, j,]
+
+    data1955 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1955 <- separate(data1955, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1955)
+
+  CO_jan[j, i, (1955-1939)] = HDWI_1955$HDWI[1]
+  CO_feb[j, i, (1955-1939)] = HDWI_1955$HDWI[2]
+  CO_mar[j, i, (1955-1939)] = HDWI_1955$HDWI[3]
+  CO_apr[j, i, (1955-1939)] = HDWI_1955$HDWI[4]
+  CO_may[j, i, (1955-1939)] = HDWI_1955$HDWI[5]
+  CO_jun[j, i, (1955-1939)] = HDWI_1955$HDWI[6]
+  CO_jul[j, i, (1955-1939)] = HDWI_1955$HDWI[7]
+  CO_aug[j, i, (1955-1939)] = HDWI_1955$HDWI[8]
+  CO_sep[j, i, (1955-1939)] = HDWI_1955$HDWI[9]
+  CO_oct[j, i, (1955-1939)] = HDWI_1955$HDWI[10]
+  CO_nov[j, i, (1955-1939)] = HDWI_1955$HDWI[11]
+  CO_dec[j, i, (1955-1939)] = HDWI_1955$HDWI[12]
+  }
+}
+```
+
+Year 1956
+
+```{r}
+tower1956 <- nc_open('CO1956.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1956, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1956, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1956, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1956, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1956, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1956, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1956, 't2m')[i, j,]
+
+    data1956 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1956 <- separate(data1956, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1956)
+
+  CO_jan[j, i, (1956-1939)] = HDWI_1956$HDWI[1]
+  CO_feb[j, i, (1956-1939)] = HDWI_1956$HDWI[2]
+  CO_mar[j, i, (1956-1939)] = HDWI_1956$HDWI[3]
+  CO_apr[j, i, (1956-1939)] = HDWI_1956$HDWI[4]
+  CO_may[j, i, (1956-1939)] = HDWI_1956$HDWI[5]
+  CO_jun[j, i, (1956-1939)] = HDWI_1956$HDWI[6]
+  CO_jul[j, i, (1956-1939)] = HDWI_1956$HDWI[7]
+  CO_aug[j, i, (1956-1939)] = HDWI_1956$HDWI[8]
+  CO_sep[j, i, (1956-1939)] = HDWI_1956$HDWI[9]
+  CO_oct[j, i, (1956-1939)] = HDWI_1956$HDWI[10]
+  CO_nov[j, i, (1956-1939)] = HDWI_1956$HDWI[11]
+  CO_dec[j, i, (1956-1939)] = HDWI_1956$HDWI[12]
+  }
+}
+```
+
+Year 1957
+
+```{r}
+tower1957 <- nc_open('CO1957.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1957, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1957, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1957, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1957, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1957, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1957, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1957, 't2m')[i, j,]
+
+    data1957 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1957 <- separate(data1957, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1957)
+
+  CO_jan[j, i, (1957-1939)] = HDWI_1957$HDWI[1]
+  CO_feb[j, i, (1957-1939)] = HDWI_1957$HDWI[2]
+  CO_mar[j, i, (1957-1939)] = HDWI_1957$HDWI[3]
+  CO_apr[j, i, (1957-1939)] = HDWI_1957$HDWI[4]
+  CO_may[j, i, (1957-1939)] = HDWI_1957$HDWI[5]
+  CO_jun[j, i, (1957-1939)] = HDWI_1957$HDWI[6]
+  CO_jul[j, i, (1957-1939)] = HDWI_1957$HDWI[7]
+  CO_aug[j, i, (1957-1939)] = HDWI_1957$HDWI[8]
+  CO_sep[j, i, (1957-1939)] = HDWI_1957$HDWI[9]
+  CO_oct[j, i, (1957-1939)] = HDWI_1957$HDWI[10]
+  CO_nov[j, i, (1957-1939)] = HDWI_1957$HDWI[11]
+  CO_dec[j, i, (1957-1939)] = HDWI_1957$HDWI[12]
+  }
+}
+```
+
+Year 1958
+
+```{r}
+tower1958 <- nc_open('CO1958.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1958, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1958, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1958, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1958, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1958, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1958, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1958, 't2m')[i, j,]
+
+    data1958 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1958 <- separate(data1958, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1958)
+
+  CO_jan[j, i, (1958-1939)] = HDWI_1958$HDWI[1]
+  CO_feb[j, i, (1958-1939)] = HDWI_1958$HDWI[2]
+  CO_mar[j, i, (1958-1939)] = HDWI_1958$HDWI[3]
+  CO_apr[j, i, (1958-1939)] = HDWI_1958$HDWI[4]
+  CO_may[j, i, (1958-1939)] = HDWI_1958$HDWI[5]
+  CO_jun[j, i, (1958-1939)] = HDWI_1958$HDWI[6]
+  CO_jul[j, i, (1958-1939)] = HDWI_1958$HDWI[7]
+  CO_aug[j, i, (1958-1939)] = HDWI_1958$HDWI[8]
+  CO_sep[j, i, (1958-1939)] = HDWI_1958$HDWI[9]
+  CO_oct[j, i, (1958-1939)] = HDWI_1958$HDWI[10]
+  CO_nov[j, i, (1958-1939)] = HDWI_1958$HDWI[11]
+  CO_dec[j, i, (1958-1939)] = HDWI_1958$HDWI[12]
+  }
+}
+```
+
+Year 1959
+
+```{r}
+tower1959 <- nc_open('CO1959.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1959, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1959, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1959, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1959, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1959, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1959, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1959, 't2m')[i, j,]
+
+    data1959 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1959 <- separate(data1959, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1959)
+
+  CO_jan[j, i, (1959-1939)] = HDWI_1959$HDWI[1]
+  CO_feb[j, i, (1959-1939)] = HDWI_1959$HDWI[2]
+  CO_mar[j, i, (1959-1939)] = HDWI_1959$HDWI[3]
+  CO_apr[j, i, (1959-1939)] = HDWI_1959$HDWI[4]
+  CO_may[j, i, (1959-1939)] = HDWI_1959$HDWI[5]
+  CO_jun[j, i, (1959-1939)] = HDWI_1959$HDWI[6]
+  CO_jul[j, i, (1959-1939)] = HDWI_1959$HDWI[7]
+  CO_aug[j, i, (1959-1939)] = HDWI_1959$HDWI[8]
+  CO_sep[j, i, (1959-1939)] = HDWI_1959$HDWI[9]
+  CO_oct[j, i, (1959-1939)] = HDWI_1959$HDWI[10]
+  CO_nov[j, i, (1959-1939)] = HDWI_1959$HDWI[11]
+  CO_dec[j, i, (1959-1939)] = HDWI_1959$HDWI[12]
+  }
+}
+```
+
+Year 1960
+
+```{r}
+tower1960 <- nc_open('CO1960.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1960, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1960, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1960, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1960, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1960, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1960, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1960, 't2m')[i, j,]
+
+    data1960 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1960 <- separate(data1960, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1960)
+
+  CO_jan[j, i, (1960 - 1939)] = HDWI_1960$HDWI[1]
+  CO_feb[j, i, (1960 - 1939)] = HDWI_1960$HDWI[2]
+  CO_mar[j, i, (1960 - 1939)] = HDWI_1960$HDWI[3]
+  CO_apr[j, i, (1960 - 1939)] = HDWI_1960$HDWI[4]
+  CO_may[j, i, (1960 - 1939)] = HDWI_1960$HDWI[5]
+  CO_jun[j, i, (1960 - 1939)] = HDWI_1960$HDWI[6]
+  CO_jul[j, i, (1960 - 1939)] = HDWI_1960$HDWI[7]
+  CO_aug[j, i, (1960 - 1939)] = HDWI_1960$HDWI[8]
+  CO_sep[j, i, (1960 - 1939)] = HDWI_1960$HDWI[9]
+  CO_oct[j, i, (1960 - 1939)] = HDWI_1960$HDWI[10]
+  CO_nov[j, i, (1960 - 1939)] = HDWI_1960$HDWI[11]
+  CO_dec[j, i, (1960 - 1939)] = HDWI_1960$HDWI[12]
+  }
+}
+```
+
+Year 1961
+
+```{r}
+tower1961 <- nc_open('CO1961.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1961, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1961, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1961, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1961, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1961, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1961, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1961, 't2m')[i, j,]
+
+    data1961 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1961 <- separate(data1961, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1961)
+
+  CO_jan[j, i, (1961 - 1939)] = HDWI_1961$HDWI[1]
+  CO_feb[j, i, (1961 - 1939)] = HDWI_1961$HDWI[2]
+  CO_mar[j, i, (1961 - 1939)] = HDWI_1961$HDWI[3]
+  CO_apr[j, i, (1961 - 1939)] = HDWI_1961$HDWI[4]
+  CO_may[j, i, (1961 - 1939)] = HDWI_1961$HDWI[5]
+  CO_jun[j, i, (1961 - 1939)] = HDWI_1961$HDWI[6]
+  CO_jul[j, i, (1961 - 1939)] = HDWI_1961$HDWI[7]
+  CO_aug[j, i, (1961 - 1939)] = HDWI_1961$HDWI[8]
+  CO_sep[j, i, (1961 - 1939)] = HDWI_1961$HDWI[9]
+  CO_oct[j, i, (1961 - 1939)] = HDWI_1961$HDWI[10]
+  CO_nov[j, i, (1961 - 1939)] = HDWI_1961$HDWI[11]
+  CO_dec[j, i, (1961 - 1939)] = HDWI_1961$HDWI[12]
+  }
+}
+```
+
+Year 1962
+
+```{r}
+tower1962 <- nc_open('CO1962.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1962, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1962, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1962, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1962, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1962, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1962, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1962, 't2m')[i, j,]
+
+    data1962 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1962 <- separate(data1962, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1962)
+
+  CO_jan[j, i, (1962-1939)] = HDWI_1962$HDWI[1]
+  CO_feb[j, i, (1962-1939)] = HDWI_1962$HDWI[2]
+  CO_mar[j, i, (1962-1939)] = HDWI_1962$HDWI[3]
+  CO_apr[j, i, (1962-1939)] = HDWI_1962$HDWI[4]
+  CO_may[j, i, (1962-1939)] = HDWI_1962$HDWI[5]
+  CO_jun[j, i, (1962-1939)] = HDWI_1962$HDWI[6]
+  CO_jul[j, i, (1962-1939)] = HDWI_1962$HDWI[7]
+  CO_aug[j, i, (1962-1939)] = HDWI_1962$HDWI[8]
+  CO_sep[j, i, (1962-1939)] = HDWI_1962$HDWI[9]
+  CO_oct[j, i, (1962-1939)] = HDWI_1962$HDWI[10]
+  CO_nov[j, i, (1962-1939)] = HDWI_1962$HDWI[11]
+  CO_dec[j, i, (1962-1939)] = HDWI_1962$HDWI[12]
+  }
+}
+```
+
+Year 1963
+
+```{r}
+tower1963 <- nc_open('CO1963.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1963, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1963, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1963, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1963, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1963, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1963, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1963, 't2m')[i, j,]
+
+    data1963 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1963 <- separate(data1963, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1963)
+
+  CO_jan[j, i, (1963-1939)] = HDWI_1963$HDWI[1]
+  CO_feb[j, i, (1963-1939)] = HDWI_1963$HDWI[2]
+  CO_mar[j, i, (1963-1939)] = HDWI_1963$HDWI[3]
+  CO_apr[j, i, (1963-1939)] = HDWI_1963$HDWI[4]
+  CO_may[j, i, (1963-1939)] = HDWI_1963$HDWI[5]
+  CO_jun[j, i, (1963-1939)] = HDWI_1963$HDWI[6]
+  CO_jul[j, i, (1963-1939)] = HDWI_1963$HDWI[7]
+  CO_aug[j, i, (1963-1939)] = HDWI_1963$HDWI[8]
+  CO_sep[j, i, (1963-1939)] = HDWI_1963$HDWI[9]
+  CO_oct[j, i, (1963-1939)] = HDWI_1963$HDWI[10]
+  CO_nov[j, i, (1963-1939)] = HDWI_1963$HDWI[11]
+  CO_dec[j, i, (1963-1939)] = HDWI_1963$HDWI[12]
+  }
+}
+```
+
+Year 1964
+
+```{r}
+tower1964 <- nc_open('CO1964.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1964, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1964, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1964, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1964, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1964, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1964, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1964, 't2m')[i, j,]
+
+    data1964 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1964 <- separate(data1964, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1964)
+
+  CO_jan[j, i, (1964-1939)] = HDWI_1964$HDWI[1]
+  CO_feb[j, i, (1964-1939)] = HDWI_1964$HDWI[2]
+  CO_mar[j, i, (1964-1939)] = HDWI_1964$HDWI[3]
+  CO_apr[j, i, (1964-1939)] = HDWI_1964$HDWI[4]
+  CO_may[j, i, (1964-1939)] = HDWI_1964$HDWI[5]
+  CO_jun[j, i, (1964-1939)] = HDWI_1964$HDWI[6]
+  CO_jul[j, i, (1964-1939)] = HDWI_1964$HDWI[7]
+  CO_aug[j, i, (1964-1939)] = HDWI_1964$HDWI[8]
+  CO_sep[j, i, (1964-1939)] = HDWI_1964$HDWI[9]
+  CO_oct[j, i, (1964-1939)] = HDWI_1964$HDWI[10]
+  CO_nov[j, i, (1964-1939)] = HDWI_1964$HDWI[11]
+  CO_dec[j, i, (1964-1939)] = HDWI_1964$HDWI[12]
+  }
+}
+```
+
+Year 1965
+
+```{r}
+tower1965 <- nc_open('CO1965.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1965, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1965, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1965, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1965, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1965, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1965, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1965, 't2m')[i, j,]
+
+    data1965 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1965 <- separate(data1965, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1965)
+
+  CO_jan[j, i, (1965-1939)] = HDWI_1965$HDWI[1]
+  CO_feb[j, i, (1965-1939)] = HDWI_1965$HDWI[2]
+  CO_mar[j, i, (1965-1939)] = HDWI_1965$HDWI[3]
+  CO_apr[j, i, (1965-1939)] = HDWI_1965$HDWI[4]
+  CO_may[j, i, (1965-1939)] = HDWI_1965$HDWI[5]
+  CO_jun[j, i, (1965-1939)] = HDWI_1965$HDWI[6]
+  CO_jul[j, i, (1965-1939)] = HDWI_1965$HDWI[7]
+  CO_aug[j, i, (1965-1939)] = HDWI_1965$HDWI[8]
+  CO_sep[j, i, (1965-1939)] = HDWI_1965$HDWI[9]
+  CO_oct[j, i, (1965-1939)] = HDWI_1965$HDWI[10]
+  CO_nov[j, i, (1965-1939)] = HDWI_1965$HDWI[11]
+  CO_dec[j, i, (1965-1939)] = HDWI_1965$HDWI[12]
+  }
+}
+```
+
+Year 1966
+
+```{r}
+tower1966 <- nc_open('CO1966.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1966, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1966, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1966, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1966, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1966, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1966, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1966, 't2m')[i, j,]
+
+    data1966 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1966 <- separate(data1966, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1966)
+
+  CO_jan[j, i, (1966-1939)] = HDWI_1966$HDWI[1]
+  CO_feb[j, i, (1966-1939)] = HDWI_1966$HDWI[2]
+  CO_mar[j, i, (1966-1939)] = HDWI_1966$HDWI[3]
+  CO_apr[j, i, (1966-1939)] = HDWI_1966$HDWI[4]
+  CO_may[j, i, (1966-1939)] = HDWI_1966$HDWI[5]
+  CO_jun[j, i, (1966-1939)] = HDWI_1966$HDWI[6]
+  CO_jul[j, i, (1966-1939)] = HDWI_1966$HDWI[7]
+  CO_aug[j, i, (1966-1939)] = HDWI_1966$HDWI[8]
+  CO_sep[j, i, (1966-1939)] = HDWI_1966$HDWI[9]
+  CO_oct[j, i, (1966-1939)] = HDWI_1966$HDWI[10]
+  CO_nov[j, i, (1966-1939)] = HDWI_1966$HDWI[11]
+  CO_dec[j, i, (1966-1939)] = HDWI_1966$HDWI[12]
+  }
+}
+```
+
+Year 1967
+
+```{r}
+tower1967 <- nc_open('CO1967.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1967, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1967, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1967, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1967, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1967, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1967, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1967, 't2m')[i, j,]
+
+    data1967 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1967 <- separate(data1967, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1967)
+
+  CO_jan[j, i, (1967-1939)] = HDWI_1967$HDWI[1]
+  CO_feb[j, i, (1967-1939)] = HDWI_1967$HDWI[2]
+  CO_mar[j, i, (1967-1939)] = HDWI_1967$HDWI[3]
+  CO_apr[j, i, (1967-1939)] = HDWI_1967$HDWI[4]
+  CO_may[j, i, (1967-1939)] = HDWI_1967$HDWI[5]
+  CO_jun[j, i, (1967-1939)] = HDWI_1967$HDWI[6]
+  CO_jul[j, i, (1967-1939)] = HDWI_1967$HDWI[7]
+  CO_aug[j, i, (1967-1939)] = HDWI_1967$HDWI[8]
+  CO_sep[j, i, (1967-1939)] = HDWI_1967$HDWI[9]
+  CO_oct[j, i, (1967-1939)] = HDWI_1967$HDWI[10]
+  CO_nov[j, i, (1967-1939)] = HDWI_1967$HDWI[11]
+  CO_dec[j, i, (1967-1939)] = HDWI_1967$HDWI[12]
+  }
+}
+```
+
+Year 1968
+
+```{r}
+tower1968 <- nc_open('CO1968.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1968, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1968, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1968, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1968, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1968, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1968, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1968, 't2m')[i, j,]
+
+    data1968 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1968 <- separate(data1968, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1968)
+
+  CO_jan[j, i, (1968-1939)] = HDWI_1968$HDWI[1]
+  CO_feb[j, i, (1968-1939)] = HDWI_1968$HDWI[2]
+  CO_mar[j, i, (1968-1939)] = HDWI_1968$HDWI[3]
+  CO_apr[j, i, (1968-1939)] = HDWI_1968$HDWI[4]
+  CO_may[j, i, (1968-1939)] = HDWI_1968$HDWI[5]
+  CO_jun[j, i, (1968-1939)] = HDWI_1968$HDWI[6]
+  CO_jul[j, i, (1968-1939)] = HDWI_1968$HDWI[7]
+  CO_aug[j, i, (1968-1939)] = HDWI_1968$HDWI[8]
+  CO_sep[j, i, (1968-1939)] = HDWI_1968$HDWI[9]
+  CO_oct[j, i, (1968-1939)] = HDWI_1968$HDWI[10]
+  CO_nov[j, i, (1968-1939)] = HDWI_1968$HDWI[11]
+  CO_dec[j, i, (1968-1939)] = HDWI_1968$HDWI[12]
+  }
+}
+```
+
+Year 1969
+
+```{r}
+tower1969 <- nc_open('CO1969.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1969, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1969, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1969, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1969, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1969, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1969, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1969, 't2m')[i, j,]
+
+    data1969 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1969 <- separate(data1969, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1969)
+
+  CO_jan[j, i, (1969-1939)] = HDWI_1969$HDWI[1]
+  CO_feb[j, i, (1969-1939)] = HDWI_1969$HDWI[2]
+  CO_mar[j, i, (1969-1939)] = HDWI_1969$HDWI[3]
+  CO_apr[j, i, (1969-1939)] = HDWI_1969$HDWI[4]
+  CO_may[j, i, (1969-1939)] = HDWI_1969$HDWI[5]
+  CO_jun[j, i, (1969-1939)] = HDWI_1969$HDWI[6]
+  CO_jul[j, i, (1969-1939)] = HDWI_1969$HDWI[7]
+  CO_aug[j, i, (1969-1939)] = HDWI_1969$HDWI[8]
+  CO_sep[j, i, (1969-1939)] = HDWI_1969$HDWI[9]
+  CO_oct[j, i, (1969-1939)] = HDWI_1969$HDWI[10]
+  CO_nov[j, i, (1969-1939)] = HDWI_1969$HDWI[11]
+  CO_dec[j, i, (1969-1939)] = HDWI_1969$HDWI[12]
+  }
+}
+```
+
+Year 1970
+
+```{r}
+tower1970 <- nc_open('CO1970.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1970, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1970, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1970, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1970, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1970, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1970, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1970, 't2m')[i, j,]
+
+    data1970 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1970 <- separate(data1970, date, into = c('year', 'month', 'day')) %>% 
+      
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1970)
+
+  CO_jan[j, i, (1970-1939)] = HDWI_1970$HDWI[1]
+  CO_feb[j, i, (1970-1939)] = HDWI_1970$HDWI[2]
+  CO_mar[j, i, (1970-1939)] = HDWI_1970$HDWI[3]
+  CO_apr[j, i, (1970-1939)] = HDWI_1970$HDWI[4]
+  CO_may[j, i, (1970-1939)] = HDWI_1970$HDWI[5]
+  CO_jun[j, i, (1970-1939)] = HDWI_1970$HDWI[6]
+  CO_jul[j, i, (1970-1939)] = HDWI_1970$HDWI[7]
+  CO_aug[j, i, (1970-1939)] = HDWI_1970$HDWI[8]
+  CO_sep[j, i, (1970-1939)] = HDWI_1970$HDWI[9]
+  CO_oct[j, i, (1970-1939)] = HDWI_1970$HDWI[10]
+  CO_nov[j, i, (1970-1939)] = HDWI_1970$HDWI[11]
+  CO_dec[j, i, (1970-1939)] = HDWI_1970$HDWI[12]
+  }
+}
+```
+
+Year 1971
+
+```{r}
+tower1971 <- nc_open('CO1971.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1971, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1971, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1971, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1971, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1971, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1971, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1971, 't2m')[i, j,]
+
+    data1971 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1971 <- separate(data1971, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1971)
+
+  CO_jan[j, i, (1971-1939)] = HDWI_1971$HDWI[1]
+  CO_feb[j, i, (1971-1939)] = HDWI_1971$HDWI[2]
+  CO_mar[j, i, (1971-1939)] = HDWI_1971$HDWI[3]
+  CO_apr[j, i, (1971-1939)] = HDWI_1971$HDWI[4]
+  CO_may[j, i, (1971-1939)] = HDWI_1971$HDWI[5]
+  CO_jun[j, i, (1971-1939)] = HDWI_1971$HDWI[6]
+  CO_jul[j, i, (1971-1939)] = HDWI_1971$HDWI[7]
+  CO_aug[j, i, (1971-1939)] = HDWI_1971$HDWI[8]
+  CO_sep[j, i, (1971-1939)] = HDWI_1971$HDWI[9]
+  CO_oct[j, i, (1971-1939)] = HDWI_1971$HDWI[10]
+  CO_nov[j, i, (1971-1939)] = HDWI_1971$HDWI[11]
+  CO_dec[j, i, (1971-1939)] = HDWI_1971$HDWI[12]
+  }
+}
+```
+
+Year 1972
+
+```{r}
+tower1972 <- nc_open('CO1972.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1972, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1972, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1972, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1972, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1972, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1972, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1972, 't2m')[i, j,]
+
+    data1972 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1972 <- separate(data1972, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1972)
+
+  CO_jan[j, i, (1972-1939)] = HDWI_1972$HDWI[1]
+  CO_feb[j, i, (1972-1939)] = HDWI_1972$HDWI[2]
+  CO_mar[j, i, (1972-1939)] = HDWI_1972$HDWI[3]
+  CO_apr[j, i, (1972-1939)] = HDWI_1972$HDWI[4]
+  CO_may[j, i, (1972-1939)] = HDWI_1972$HDWI[5]
+  CO_jun[j, i, (1972-1939)] = HDWI_1972$HDWI[6]
+  CO_jul[j, i, (1972-1939)] = HDWI_1972$HDWI[7]
+  CO_aug[j, i, (1972-1939)] = HDWI_1972$HDWI[8]
+  CO_sep[j, i, (1972-1939)] = HDWI_1972$HDWI[9]
+  CO_oct[j, i, (1972-1939)] = HDWI_1972$HDWI[10]
+  CO_nov[j, i, (1972-1939)] = HDWI_1972$HDWI[11]
+  CO_dec[j, i, (1972-1939)] = HDWI_1972$HDWI[12]
+  }
+}
+```
+
+Year 1973
+
+```{r}
+tower1973 <- nc_open('CO1973.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1973, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1973, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1973, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1973, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1973, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1973, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1973, 't2m')[i, j,]
+
+    data1973 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1973 <- separate(data1973, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1973)
+
+  CO_jan[j, i, (1973-1939)] = HDWI_1973$HDWI[1]
+  CO_feb[j, i, (1973-1939)] = HDWI_1973$HDWI[2]
+  CO_mar[j, i, (1973-1939)] = HDWI_1973$HDWI[3]
+  CO_apr[j, i, (1973-1939)] = HDWI_1973$HDWI[4]
+  CO_may[j, i, (1973-1939)] = HDWI_1973$HDWI[5]
+  CO_jun[j, i, (1973-1939)] = HDWI_1973$HDWI[6]
+  CO_jul[j, i, (1973-1939)] = HDWI_1973$HDWI[7]
+  CO_aug[j, i, (1973-1939)] = HDWI_1973$HDWI[8]
+  CO_sep[j, i, (1973-1939)] = HDWI_1973$HDWI[9]
+  CO_oct[j, i, (1973-1939)] = HDWI_1973$HDWI[10]
+  CO_nov[j, i, (1973-1939)] = HDWI_1973$HDWI[11]
+  CO_dec[j, i, (1973-1939)] = HDWI_1973$HDWI[12]
+  }
+}
+```
+
+Year 1974
+
+```{r}
+tower1974 <- nc_open('CO1974.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1974, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1974, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1974, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1974, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1974, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1974, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1974, 't2m')[i, j,]
+
+    data1974 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1974 <- separate(data1974, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1974)
+
+  CO_jan[j, i, (1974-1939)] = HDWI_1974$HDWI[1]
+  CO_feb[j, i, (1974-1939)] = HDWI_1974$HDWI[2]
+  CO_mar[j, i, (1974-1939)] = HDWI_1974$HDWI[3]
+  CO_apr[j, i, (1974-1939)] = HDWI_1974$HDWI[4]
+  CO_may[j, i, (1974-1939)] = HDWI_1974$HDWI[5]
+  CO_jun[j, i, (1974-1939)] = HDWI_1974$HDWI[6]
+  CO_jul[j, i, (1974-1939)] = HDWI_1974$HDWI[7]
+  CO_aug[j, i, (1974-1939)] = HDWI_1974$HDWI[8]
+  CO_sep[j, i, (1974-1939)] = HDWI_1974$HDWI[9]
+  CO_oct[j, i, (1974-1939)] = HDWI_1974$HDWI[10]
+  CO_nov[j, i, (1974-1939)] = HDWI_1974$HDWI[11]
+  CO_dec[j, i, (1974-1939)] = HDWI_1974$HDWI[12]
+  }
+}
+```
+
+Year 1975
+
+```{r}
+tower1975 <- nc_open('CO1975.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1975, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1975, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1975, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1975, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1975, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1975, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1975, 't2m')[i, j,]
+
+    data1975 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1975 <- separate(data1975, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1975)
+
+  CO_jan[j, i, (1975-1939)] = HDWI_1975$HDWI[1]
+  CO_feb[j, i, (1975-1939)] = HDWI_1975$HDWI[2]
+  CO_mar[j, i, (1975-1939)] = HDWI_1975$HDWI[3]
+  CO_apr[j, i, (1975-1939)] = HDWI_1975$HDWI[4]
+  CO_may[j, i, (1975-1939)] = HDWI_1975$HDWI[5]
+  CO_jun[j, i, (1975-1939)] = HDWI_1975$HDWI[6]
+  CO_jul[j, i, (1975-1939)] = HDWI_1975$HDWI[7]
+  CO_aug[j, i, (1975-1939)] = HDWI_1975$HDWI[8]
+  CO_sep[j, i, (1975-1939)] = HDWI_1975$HDWI[9]
+  CO_oct[j, i, (1975-1939)] = HDWI_1975$HDWI[10]
+  CO_nov[j, i, (1975-1939)] = HDWI_1975$HDWI[11]
+  CO_dec[j, i, (1975-1939)] = HDWI_1975$HDWI[12]
+  }
+}
+```
+
+Year 1976
+
+```{r}
+tower1976 <- nc_open('CO1976.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1976, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1976, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1976, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1976, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1976, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1976, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1976, 't2m')[i, j,]
+
+    data1976 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1976 <- separate(data1976, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1976)
+
+  CO_jan[j, i, (1976-1939)] = HDWI_1976$HDWI[1]
+  CO_feb[j, i, (1976-1939)] = HDWI_1976$HDWI[2]
+  CO_mar[j, i, (1976-1939)] = HDWI_1976$HDWI[3]
+  CO_apr[j, i, (1976-1939)] = HDWI_1976$HDWI[4]
+  CO_may[j, i, (1976-1939)] = HDWI_1976$HDWI[5]
+  CO_jun[j, i, (1976-1939)] = HDWI_1976$HDWI[6]
+  CO_jul[j, i, (1976-1939)] = HDWI_1976$HDWI[7]
+  CO_aug[j, i, (1976-1939)] = HDWI_1976$HDWI[8]
+  CO_sep[j, i, (1976-1939)] = HDWI_1976$HDWI[9]
+  CO_oct[j, i, (1976-1939)] = HDWI_1976$HDWI[10]
+  CO_nov[j, i, (1976-1939)] = HDWI_1976$HDWI[11]
+  CO_dec[j, i, (1976-1939)] = HDWI_1976$HDWI[12]
+  }
+}
+```
+
+Year 1977
+
+```{r}
+tower1977 <- nc_open('CO1977.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1977, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1977, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1977, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1977, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1977, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1977, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1977, 't2m')[i, j,]
+
+    data1977 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1977 <- separate(data1977, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1977)
+
+  CO_jan[j, i, (1977-1939)] = HDWI_1977$HDWI[1]
+  CO_feb[j, i, (1977-1939)] = HDWI_1977$HDWI[2]
+  CO_mar[j, i, (1977-1939)] = HDWI_1977$HDWI[3]
+  CO_apr[j, i, (1977-1939)] = HDWI_1977$HDWI[4]
+  CO_may[j, i, (1977-1939)] = HDWI_1977$HDWI[5]
+  CO_jun[j, i, (1977-1939)] = HDWI_1977$HDWI[6]
+  CO_jul[j, i, (1977-1939)] = HDWI_1977$HDWI[7]
+  CO_aug[j, i, (1977-1939)] = HDWI_1977$HDWI[8]
+  CO_sep[j, i, (1977-1939)] = HDWI_1977$HDWI[9]
+  CO_oct[j, i, (1977-1939)] = HDWI_1977$HDWI[10]
+  CO_nov[j, i, (1977-1939)] = HDWI_1977$HDWI[11]
+  CO_dec[j, i, (1977-1939)] = HDWI_1977$HDWI[12]
+  }
+}
+```
+
+Year 1978
+
+```{r}
+tower1978 <- nc_open('CO1978.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1978, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1978, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1978, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1978, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1978, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1978, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1978, 't2m')[i, j,]
+
+    data1978 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1978 <- separate(data1978, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1978)
+
+  CO_jan[j, i, (1978-1939)] = HDWI_1978$HDWI[1]
+  CO_feb[j, i, (1978-1939)] = HDWI_1978$HDWI[2]
+  CO_mar[j, i, (1978-1939)] = HDWI_1978$HDWI[3]
+  CO_apr[j, i, (1978-1939)] = HDWI_1978$HDWI[4]
+  CO_may[j, i, (1978-1939)] = HDWI_1978$HDWI[5]
+  CO_jun[j, i, (1978-1939)] = HDWI_1978$HDWI[6]
+  CO_jul[j, i, (1978-1939)] = HDWI_1978$HDWI[7]
+  CO_aug[j, i, (1978-1939)] = HDWI_1978$HDWI[8]
+  CO_sep[j, i, (1978-1939)] = HDWI_1978$HDWI[9]
+  CO_oct[j, i, (1978-1939)] = HDWI_1978$HDWI[10]
+  CO_nov[j, i, (1978-1939)] = HDWI_1978$HDWI[11]
+  CO_dec[j, i, (1978-1939)] = HDWI_1978$HDWI[12]
+  }
+}
+```
+
+Year 1979
+
+```{r}
+tower1979 <- nc_open('CO1979.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1979, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1979, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1979, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1979, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1979, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1979, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1979, 't2m')[i, j,]
+
+    data1979 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1979 <- separate(data1979, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1979)
+
+  CO_jan[j, i, (1979-1939)] = HDWI_1979$HDWI[1]
+  CO_feb[j, i, (1979-1939)] = HDWI_1979$HDWI[2]
+  CO_mar[j, i, (1979-1939)] = HDWI_1979$HDWI[3]
+  CO_apr[j, i, (1979-1939)] = HDWI_1979$HDWI[4]
+  CO_may[j, i, (1979-1939)] = HDWI_1979$HDWI[5]
+  CO_jun[j, i, (1979-1939)] = HDWI_1979$HDWI[6]
+  CO_jul[j, i, (1979-1939)] = HDWI_1979$HDWI[7]
+  CO_aug[j, i, (1979-1939)] = HDWI_1979$HDWI[8]
+  CO_sep[j, i, (1979-1939)] = HDWI_1979$HDWI[9]
+  CO_oct[j, i, (1979-1939)] = HDWI_1979$HDWI[10]
+  CO_nov[j, i, (1979-1939)] = HDWI_1979$HDWI[11]
+  CO_dec[j, i, (1979-1939)] = HDWI_1979$HDWI[12]
+  }
+}
+```
+
+Year 1980
+
+```{r}
+tower1980 <- nc_open('CO1980.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1980, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1980, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1980, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1980, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1980, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1980, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1980, 't2m')[i, j,]
+
+    data1980 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1980 <- separate(data1980, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1980)
+
+  CO_jan[j, i, (1980 - 1939)] = HDWI_1980$HDWI[1]
+  CO_feb[j, i, (1980 - 1939)] = HDWI_1980$HDWI[2]
+  CO_mar[j, i, (1980 - 1939)] = HDWI_1980$HDWI[3]
+  CO_apr[j, i, (1980 - 1939)] = HDWI_1980$HDWI[4]
+  CO_may[j, i, (1980 - 1939)] = HDWI_1980$HDWI[5]
+  CO_jun[j, i, (1980 - 1939)] = HDWI_1980$HDWI[6]
+  CO_jul[j, i, (1980 - 1939)] = HDWI_1980$HDWI[7]
+  CO_aug[j, i, (1980 - 1939)] = HDWI_1980$HDWI[8]
+  CO_sep[j, i, (1980 - 1939)] = HDWI_1980$HDWI[9]
+  CO_oct[j, i, (1980 - 1939)] = HDWI_1980$HDWI[10]
+  CO_nov[j, i, (1980 - 1939)] = HDWI_1980$HDWI[11]
+  CO_dec[j, i, (1980 - 1939)] = HDWI_1980$HDWI[12]
+  }
+}
+```
+
+Year 1981
+
+```{r}
+tower1981 <- nc_open('CO1981.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1981, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1981, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1981, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1981, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1981, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1981, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1981, 't2m')[i, j,]
+
+    data1981 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1981 <- separate(data1981, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1981)
+
+  CO_jan[j, i, (1981 - 1939)] = HDWI_1981$HDWI[1]
+  CO_feb[j, i, (1981 - 1939)] = HDWI_1981$HDWI[2]
+  CO_mar[j, i, (1981 - 1939)] = HDWI_1981$HDWI[3]
+  CO_apr[j, i, (1981 - 1939)] = HDWI_1981$HDWI[4]
+  CO_may[j, i, (1981 - 1939)] = HDWI_1981$HDWI[5]
+  CO_jun[j, i, (1981 - 1939)] = HDWI_1981$HDWI[6]
+  CO_jul[j, i, (1981 - 1939)] = HDWI_1981$HDWI[7]
+  CO_aug[j, i, (1981 - 1939)] = HDWI_1981$HDWI[8]
+  CO_sep[j, i, (1981 - 1939)] = HDWI_1981$HDWI[9]
+  CO_oct[j, i, (1981 - 1939)] = HDWI_1981$HDWI[10]
+  CO_nov[j, i, (1981 - 1939)] = HDWI_1981$HDWI[11]
+  CO_dec[j, i, (1981 - 1939)] = HDWI_1981$HDWI[12]
+  }
+}
+```
+
+Year 1982
+
+```{r}
+tower1982 <- nc_open('CO1982.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1982, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1982, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1982, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1982, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1982, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1982, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1982, 't2m')[i, j,]
+
+    data1982 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1982 <- separate(data1982, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1982)
+
+  CO_jan[j, i, (1982-1939)] = HDWI_1982$HDWI[1]
+  CO_feb[j, i, (1982-1939)] = HDWI_1982$HDWI[2]
+  CO_mar[j, i, (1982-1939)] = HDWI_1982$HDWI[3]
+  CO_apr[j, i, (1982-1939)] = HDWI_1982$HDWI[4]
+  CO_may[j, i, (1982-1939)] = HDWI_1982$HDWI[5]
+  CO_jun[j, i, (1982-1939)] = HDWI_1982$HDWI[6]
+  CO_jul[j, i, (1982-1939)] = HDWI_1982$HDWI[7]
+  CO_aug[j, i, (1982-1939)] = HDWI_1982$HDWI[8]
+  CO_sep[j, i, (1982-1939)] = HDWI_1982$HDWI[9]
+  CO_oct[j, i, (1982-1939)] = HDWI_1982$HDWI[10]
+  CO_nov[j, i, (1982-1939)] = HDWI_1982$HDWI[11]
+  CO_dec[j, i, (1982-1939)] = HDWI_1982$HDWI[12]
+  }
+}
+```
+
+Year 1983
+
+```{r}
+tower1983 <- nc_open('CO1983.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1983, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1983, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1983, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1983, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1983, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1983, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1983, 't2m')[i, j,]
+
+    data1983 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1983 <- separate(data1983, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1983)
+
+  CO_jan[j, i, (1983-1939)] = HDWI_1983$HDWI[1]
+  CO_feb[j, i, (1983-1939)] = HDWI_1983$HDWI[2]
+  CO_mar[j, i, (1983-1939)] = HDWI_1983$HDWI[3]
+  CO_apr[j, i, (1983-1939)] = HDWI_1983$HDWI[4]
+  CO_may[j, i, (1983-1939)] = HDWI_1983$HDWI[5]
+  CO_jun[j, i, (1983-1939)] = HDWI_1983$HDWI[6]
+  CO_jul[j, i, (1983-1939)] = HDWI_1983$HDWI[7]
+  CO_aug[j, i, (1983-1939)] = HDWI_1983$HDWI[8]
+  CO_sep[j, i, (1983-1939)] = HDWI_1983$HDWI[9]
+  CO_oct[j, i, (1983-1939)] = HDWI_1983$HDWI[10]
+  CO_nov[j, i, (1983-1939)] = HDWI_1983$HDWI[11]
+  CO_dec[j, i, (1983-1939)] = HDWI_1983$HDWI[12]
+  }
+}
+```
+
+Year 1984
+
+```{r}
+tower1984 <- nc_open('CO1984.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1984, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1984, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1984, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1984, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1984, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1984, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1984, 't2m')[i, j,]
+
+    data1984 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1984 <- separate(data1984, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1984)
+
+  CO_jan[j, i, (1984-1939)] = HDWI_1984$HDWI[1]
+  CO_feb[j, i, (1984-1939)] = HDWI_1984$HDWI[2]
+  CO_mar[j, i, (1984-1939)] = HDWI_1984$HDWI[3]
+  CO_apr[j, i, (1984-1939)] = HDWI_1984$HDWI[4]
+  CO_may[j, i, (1984-1939)] = HDWI_1984$HDWI[5]
+  CO_jun[j, i, (1984-1939)] = HDWI_1984$HDWI[6]
+  CO_jul[j, i, (1984-1939)] = HDWI_1984$HDWI[7]
+  CO_aug[j, i, (1984-1939)] = HDWI_1984$HDWI[8]
+  CO_sep[j, i, (1984-1939)] = HDWI_1984$HDWI[9]
+  CO_oct[j, i, (1984-1939)] = HDWI_1984$HDWI[10]
+  CO_nov[j, i, (1984-1939)] = HDWI_1984$HDWI[11]
+  CO_dec[j, i, (1984-1939)] = HDWI_1984$HDWI[12]
+  }
+}
+```
+
+Year 1985
+
+```{r}
+tower1985 <- nc_open('CO1985.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1985, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1985, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1985, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1985, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1985, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1985, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1985, 't2m')[i, j,]
+
+    data1985 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1985 <- separate(data1985, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1985)
+
+  CO_jan[j, i, (1985-1939)] = HDWI_1985$HDWI[1]
+  CO_feb[j, i, (1985-1939)] = HDWI_1985$HDWI[2]
+  CO_mar[j, i, (1985-1939)] = HDWI_1985$HDWI[3]
+  CO_apr[j, i, (1985-1939)] = HDWI_1985$HDWI[4]
+  CO_may[j, i, (1985-1939)] = HDWI_1985$HDWI[5]
+  CO_jun[j, i, (1985-1939)] = HDWI_1985$HDWI[6]
+  CO_jul[j, i, (1985-1939)] = HDWI_1985$HDWI[7]
+  CO_aug[j, i, (1985-1939)] = HDWI_1985$HDWI[8]
+  CO_sep[j, i, (1985-1939)] = HDWI_1985$HDWI[9]
+  CO_oct[j, i, (1985-1939)] = HDWI_1985$HDWI[10]
+  CO_nov[j, i, (1985-1939)] = HDWI_1985$HDWI[11]
+  CO_dec[j, i, (1985-1939)] = HDWI_1985$HDWI[12]
+  }
+}
+```
+
+Year 1986
+
+```{r}
+tower1986 <- nc_open('CO1986.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1986, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1986, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1986, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1986, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1986, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1986, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1986, 't2m')[i, j,]
+
+    data1986 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1986 <- separate(data1986, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1986)
+
+  CO_jan[j, i, (1986-1939)] = HDWI_1986$HDWI[1]
+  CO_feb[j, i, (1986-1939)] = HDWI_1986$HDWI[2]
+  CO_mar[j, i, (1986-1939)] = HDWI_1986$HDWI[3]
+  CO_apr[j, i, (1986-1939)] = HDWI_1986$HDWI[4]
+  CO_may[j, i, (1986-1939)] = HDWI_1986$HDWI[5]
+  CO_jun[j, i, (1986-1939)] = HDWI_1986$HDWI[6]
+  CO_jul[j, i, (1986-1939)] = HDWI_1986$HDWI[7]
+  CO_aug[j, i, (1986-1939)] = HDWI_1986$HDWI[8]
+  CO_sep[j, i, (1986-1939)] = HDWI_1986$HDWI[9]
+  CO_oct[j, i, (1986-1939)] = HDWI_1986$HDWI[10]
+  CO_nov[j, i, (1986-1939)] = HDWI_1986$HDWI[11]
+  CO_dec[j, i, (1986-1939)] = HDWI_1986$HDWI[12]
+  }
+}
+```
+
+Year 1987
+
+```{r}
+tower1987 <- nc_open('CO1987.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1987, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1987, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1987, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1987, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1987, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1987, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1987, 't2m')[i, j,]
+
+    data1987 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1987 <- separate(data1987, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1987)
+
+  CO_jan[j, i, (1987-1939)] = HDWI_1987$HDWI[1]
+  CO_feb[j, i, (1987-1939)] = HDWI_1987$HDWI[2]
+  CO_mar[j, i, (1987-1939)] = HDWI_1987$HDWI[3]
+  CO_apr[j, i, (1987-1939)] = HDWI_1987$HDWI[4]
+  CO_may[j, i, (1987-1939)] = HDWI_1987$HDWI[5]
+  CO_jun[j, i, (1987-1939)] = HDWI_1987$HDWI[6]
+  CO_jul[j, i, (1987-1939)] = HDWI_1987$HDWI[7]
+  CO_aug[j, i, (1987-1939)] = HDWI_1987$HDWI[8]
+  CO_sep[j, i, (1987-1939)] = HDWI_1987$HDWI[9]
+  CO_oct[j, i, (1987-1939)] = HDWI_1987$HDWI[10]
+  CO_nov[j, i, (1987-1939)] = HDWI_1987$HDWI[11]
+  CO_dec[j, i, (1987-1939)] = HDWI_1987$HDWI[12]
+  }
+}
+```
+
+Year 1988
+
+```{r}
+tower1988 <- nc_open('CO1988.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1988, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1988, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1988, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1988, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1988, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1988, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1988, 't2m')[i, j,]
+
+    data1988 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1988 <- separate(data1988, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1988)
+
+  CO_jan[j, i, (1988-1939)] = HDWI_1988$HDWI[1]
+  CO_feb[j, i, (1988-1939)] = HDWI_1988$HDWI[2]
+  CO_mar[j, i, (1988-1939)] = HDWI_1988$HDWI[3]
+  CO_apr[j, i, (1988-1939)] = HDWI_1988$HDWI[4]
+  CO_may[j, i, (1988-1939)] = HDWI_1988$HDWI[5]
+  CO_jun[j, i, (1988-1939)] = HDWI_1988$HDWI[6]
+  CO_jul[j, i, (1988-1939)] = HDWI_1988$HDWI[7]
+  CO_aug[j, i, (1988-1939)] = HDWI_1988$HDWI[8]
+  CO_sep[j, i, (1988-1939)] = HDWI_1988$HDWI[9]
+  CO_oct[j, i, (1988-1939)] = HDWI_1988$HDWI[10]
+  CO_nov[j, i, (1988-1939)] = HDWI_1988$HDWI[11]
+  CO_dec[j, i, (1988-1939)] = HDWI_1988$HDWI[12]
+  }
+}
+```
+
+Year 1989
+
+```{r}
+tower1989 <- nc_open('CO1989.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1989, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1989, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1989, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1989, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1989, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1989, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1989, 't2m')[i, j,]
+
+    data1989 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1989 <- separate(data1989, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1989)
+
+  CO_jan[j, i, (1989-1939)] = HDWI_1989$HDWI[1]
+  CO_feb[j, i, (1989-1939)] = HDWI_1989$HDWI[2]
+  CO_mar[j, i, (1989-1939)] = HDWI_1989$HDWI[3]
+  CO_apr[j, i, (1989-1939)] = HDWI_1989$HDWI[4]
+  CO_may[j, i, (1989-1939)] = HDWI_1989$HDWI[5]
+  CO_jun[j, i, (1989-1939)] = HDWI_1989$HDWI[6]
+  CO_jul[j, i, (1989-1939)] = HDWI_1989$HDWI[7]
+  CO_aug[j, i, (1989-1939)] = HDWI_1989$HDWI[8]
+  CO_sep[j, i, (1989-1939)] = HDWI_1989$HDWI[9]
+  CO_oct[j, i, (1989-1939)] = HDWI_1989$HDWI[10]
+  CO_nov[j, i, (1989-1939)] = HDWI_1989$HDWI[11]
+  CO_dec[j, i, (1989-1939)] = HDWI_1989$HDWI[12]
+  }
+}
+```
+
+Year 1990
+
+```{r}
+tower1990 <- nc_open('CO1990.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1990, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1990, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1990, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1990, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1990, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1990, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1990, 't2m')[i, j,]
+
+    data1990 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1990 <- separate(data1990, date, into = c('year', 'month', 'day')) %>% 
+      
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1990)
+
+  CO_jan[j, i, (1990-1939)] = HDWI_1990$HDWI[1]
+  CO_feb[j, i, (1990-1939)] = HDWI_1990$HDWI[2]
+  CO_mar[j, i, (1990-1939)] = HDWI_1990$HDWI[3]
+  CO_apr[j, i, (1990-1939)] = HDWI_1990$HDWI[4]
+  CO_may[j, i, (1990-1939)] = HDWI_1990$HDWI[5]
+  CO_jun[j, i, (1990-1939)] = HDWI_1990$HDWI[6]
+  CO_jul[j, i, (1990-1939)] = HDWI_1990$HDWI[7]
+  CO_aug[j, i, (1990-1939)] = HDWI_1990$HDWI[8]
+  CO_sep[j, i, (1990-1939)] = HDWI_1990$HDWI[9]
+  CO_oct[j, i, (1990-1939)] = HDWI_1990$HDWI[10]
+  CO_nov[j, i, (1990-1939)] = HDWI_1990$HDWI[11]
+  CO_dec[j, i, (1990-1939)] = HDWI_1990$HDWI[12]
+  }
+}
+```
+
+Year 1991
+
+```{r}
+tower1991 <- nc_open('CO1991.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1991, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1991, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1991, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1991, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1991, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1991, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1991, 't2m')[i, j,]
+
+    data1991 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1991 <- separate(data1991, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1991)
+
+  CO_jan[j, i, (1991-1939)] = HDWI_1991$HDWI[1]
+  CO_feb[j, i, (1991-1939)] = HDWI_1991$HDWI[2]
+  CO_mar[j, i, (1991-1939)] = HDWI_1991$HDWI[3]
+  CO_apr[j, i, (1991-1939)] = HDWI_1991$HDWI[4]
+  CO_may[j, i, (1991-1939)] = HDWI_1991$HDWI[5]
+  CO_jun[j, i, (1991-1939)] = HDWI_1991$HDWI[6]
+  CO_jul[j, i, (1991-1939)] = HDWI_1991$HDWI[7]
+  CO_aug[j, i, (1991-1939)] = HDWI_1991$HDWI[8]
+  CO_sep[j, i, (1991-1939)] = HDWI_1991$HDWI[9]
+  CO_oct[j, i, (1991-1939)] = HDWI_1991$HDWI[10]
+  CO_nov[j, i, (1991-1939)] = HDWI_1991$HDWI[11]
+  CO_dec[j, i, (1991-1939)] = HDWI_1991$HDWI[12]
+  }
+}
+```
+
+Year 1992
+
+```{r}
+tower1992 <- nc_open('CO1992.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1992, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1992, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1992, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1992, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1992, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1992, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1992, 't2m')[i, j,]
+
+    data1992 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1992 <- separate(data1992, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1992)
+
+  CO_jan[j, i, (1992-1939)] = HDWI_1992$HDWI[1]
+  CO_feb[j, i, (1992-1939)] = HDWI_1992$HDWI[2]
+  CO_mar[j, i, (1992-1939)] = HDWI_1992$HDWI[3]
+  CO_apr[j, i, (1992-1939)] = HDWI_1992$HDWI[4]
+  CO_may[j, i, (1992-1939)] = HDWI_1992$HDWI[5]
+  CO_jun[j, i, (1992-1939)] = HDWI_1992$HDWI[6]
+  CO_jul[j, i, (1992-1939)] = HDWI_1992$HDWI[7]
+  CO_aug[j, i, (1992-1939)] = HDWI_1992$HDWI[8]
+  CO_sep[j, i, (1992-1939)] = HDWI_1992$HDWI[9]
+  CO_oct[j, i, (1992-1939)] = HDWI_1992$HDWI[10]
+  CO_nov[j, i, (1992-1939)] = HDWI_1992$HDWI[11]
+  CO_dec[j, i, (1992-1939)] = HDWI_1992$HDWI[12]
+  }
+}
+```
+
+Year 1993
+
+```{r}
+tower1993 <- nc_open('CO1993.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1993, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1993, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1993, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1993, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1993, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1993, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1993, 't2m')[i, j,]
+
+    data1993 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1993 <- separate(data1993, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1993)
+
+  CO_jan[j, i, (1993-1939)] = HDWI_1993$HDWI[1]
+  CO_feb[j, i, (1993-1939)] = HDWI_1993$HDWI[2]
+  CO_mar[j, i, (1993-1939)] = HDWI_1993$HDWI[3]
+  CO_apr[j, i, (1993-1939)] = HDWI_1993$HDWI[4]
+  CO_may[j, i, (1993-1939)] = HDWI_1993$HDWI[5]
+  CO_jun[j, i, (1993-1939)] = HDWI_1993$HDWI[6]
+  CO_jul[j, i, (1993-1939)] = HDWI_1993$HDWI[7]
+  CO_aug[j, i, (1993-1939)] = HDWI_1993$HDWI[8]
+  CO_sep[j, i, (1993-1939)] = HDWI_1993$HDWI[9]
+  CO_oct[j, i, (1993-1939)] = HDWI_1993$HDWI[10]
+  CO_nov[j, i, (1993-1939)] = HDWI_1993$HDWI[11]
+  CO_dec[j, i, (1993-1939)] = HDWI_1993$HDWI[12]
+  }
+}
+```
+
+Year 1994
+
+```{r}
+tower1994 <- nc_open('CO1994.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1994, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1994, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1994, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1994, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1994, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1994, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1994, 't2m')[i, j,]
+
+    data1994 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1994 <- separate(data1994, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1994)
+
+  CO_jan[j, i, (1994-1939)] = HDWI_1994$HDWI[1]
+  CO_feb[j, i, (1994-1939)] = HDWI_1994$HDWI[2]
+  CO_mar[j, i, (1994-1939)] = HDWI_1994$HDWI[3]
+  CO_apr[j, i, (1994-1939)] = HDWI_1994$HDWI[4]
+  CO_may[j, i, (1994-1939)] = HDWI_1994$HDWI[5]
+  CO_jun[j, i, (1994-1939)] = HDWI_1994$HDWI[6]
+  CO_jul[j, i, (1994-1939)] = HDWI_1994$HDWI[7]
+  CO_aug[j, i, (1994-1939)] = HDWI_1994$HDWI[8]
+  CO_sep[j, i, (1994-1939)] = HDWI_1994$HDWI[9]
+  CO_oct[j, i, (1994-1939)] = HDWI_1994$HDWI[10]
+  CO_nov[j, i, (1994-1939)] = HDWI_1994$HDWI[11]
+  CO_dec[j, i, (1994-1939)] = HDWI_1994$HDWI[12]
+  }
+}
+```
+
+Year 1995
+
+```{r}
+tower1995 <- nc_open('CO1995.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1995, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1995, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1995, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1995, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1995, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1995, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1995, 't2m')[i, j,]
+
+    data1995 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1995 <- separate(data1995, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1995)
+
+  CO_jan[j, i, (1995-1939)] = HDWI_1995$HDWI[1]
+  CO_feb[j, i, (1995-1939)] = HDWI_1995$HDWI[2]
+  CO_mar[j, i, (1995-1939)] = HDWI_1995$HDWI[3]
+  CO_apr[j, i, (1995-1939)] = HDWI_1995$HDWI[4]
+  CO_may[j, i, (1995-1939)] = HDWI_1995$HDWI[5]
+  CO_jun[j, i, (1995-1939)] = HDWI_1995$HDWI[6]
+  CO_jul[j, i, (1995-1939)] = HDWI_1995$HDWI[7]
+  CO_aug[j, i, (1995-1939)] = HDWI_1995$HDWI[8]
+  CO_sep[j, i, (1995-1939)] = HDWI_1995$HDWI[9]
+  CO_oct[j, i, (1995-1939)] = HDWI_1995$HDWI[10]
+  CO_nov[j, i, (1995-1939)] = HDWI_1995$HDWI[11]
+  CO_dec[j, i, (1995-1939)] = HDWI_1995$HDWI[12]
+  }
+}
+```
+
+Year 1996
+
+```{r}
+tower1996 <- nc_open('CO1996.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1996, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1996, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1996, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1996, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1996, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1996, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1996, 't2m')[i, j,]
+
+    data1996 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1996 <- separate(data1996, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1996)
+
+  CO_jan[j, i, (1996-1939)] = HDWI_1996$HDWI[1]
+  CO_feb[j, i, (1996-1939)] = HDWI_1996$HDWI[2]
+  CO_mar[j, i, (1996-1939)] = HDWI_1996$HDWI[3]
+  CO_apr[j, i, (1996-1939)] = HDWI_1996$HDWI[4]
+  CO_may[j, i, (1996-1939)] = HDWI_1996$HDWI[5]
+  CO_jun[j, i, (1996-1939)] = HDWI_1996$HDWI[6]
+  CO_jul[j, i, (1996-1939)] = HDWI_1996$HDWI[7]
+  CO_aug[j, i, (1996-1939)] = HDWI_1996$HDWI[8]
+  CO_sep[j, i, (1996-1939)] = HDWI_1996$HDWI[9]
+  CO_oct[j, i, (1996-1939)] = HDWI_1996$HDWI[10]
+  CO_nov[j, i, (1996-1939)] = HDWI_1996$HDWI[11]
+  CO_dec[j, i, (1996-1939)] = HDWI_1996$HDWI[12]
+  }
+}
+```
+
+Year 1997
+
+```{r}
+tower1997 <- nc_open('CO1997.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1997, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1997, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1997, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1997, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1997, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1997, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1997, 't2m')[i, j,]
+
+    data1997 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1997 <- separate(data1997, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1997)
+
+  CO_jan[j, i, (1997-1939)] = HDWI_1997$HDWI[1]
+  CO_feb[j, i, (1997-1939)] = HDWI_1997$HDWI[2]
+  CO_mar[j, i, (1997-1939)] = HDWI_1997$HDWI[3]
+  CO_apr[j, i, (1997-1939)] = HDWI_1997$HDWI[4]
+  CO_may[j, i, (1997-1939)] = HDWI_1997$HDWI[5]
+  CO_jun[j, i, (1997-1939)] = HDWI_1997$HDWI[6]
+  CO_jul[j, i, (1997-1939)] = HDWI_1997$HDWI[7]
+  CO_aug[j, i, (1997-1939)] = HDWI_1997$HDWI[8]
+  CO_sep[j, i, (1997-1939)] = HDWI_1997$HDWI[9]
+  CO_oct[j, i, (1997-1939)] = HDWI_1997$HDWI[10]
+  CO_nov[j, i, (1997-1939)] = HDWI_1997$HDWI[11]
+  CO_dec[j, i, (1997-1939)] = HDWI_1997$HDWI[12]
+  }
+}
+```
+
+Year 1998
+
+```{r}
+tower1998 <- nc_open('CO1998.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1998, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1998, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1998, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1998, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1998, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1998, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1998, 't2m')[i, j,]
+
+    data1998 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1998 <- separate(data1998, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1998)
+
+  CO_jan[j, i, (1998-1939)] = HDWI_1998$HDWI[1]
+  CO_feb[j, i, (1998-1939)] = HDWI_1998$HDWI[2]
+  CO_mar[j, i, (1998-1939)] = HDWI_1998$HDWI[3]
+  CO_apr[j, i, (1998-1939)] = HDWI_1998$HDWI[4]
+  CO_may[j, i, (1998-1939)] = HDWI_1998$HDWI[5]
+  CO_jun[j, i, (1998-1939)] = HDWI_1998$HDWI[6]
+  CO_jul[j, i, (1998-1939)] = HDWI_1998$HDWI[7]
+  CO_aug[j, i, (1998-1939)] = HDWI_1998$HDWI[8]
+  CO_sep[j, i, (1998-1939)] = HDWI_1998$HDWI[9]
+  CO_oct[j, i, (1998-1939)] = HDWI_1998$HDWI[10]
+  CO_nov[j, i, (1998-1939)] = HDWI_1998$HDWI[11]
+  CO_dec[j, i, (1998-1939)] = HDWI_1998$HDWI[12]
+  }
+}
+```
+
+Year 1999
+
+```{r}
+tower1999 <- nc_open('CO1999.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower1999, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower1999, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower1999, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower1999, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower1999, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower1999, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower1999, 't2m')[i, j,]
+
+    data1999 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_1999 <- separate(data1999, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 1999)
+
+  CO_jan[j, i, (1999-1939)] = HDWI_1999$HDWI[1]
+  CO_feb[j, i, (1999-1939)] = HDWI_1999$HDWI[2]
+  CO_mar[j, i, (1999-1939)] = HDWI_1999$HDWI[3]
+  CO_apr[j, i, (1999-1939)] = HDWI_1999$HDWI[4]
+  CO_may[j, i, (1999-1939)] = HDWI_1999$HDWI[5]
+  CO_jun[j, i, (1999-1939)] = HDWI_1999$HDWI[6]
+  CO_jul[j, i, (1999-1939)] = HDWI_1999$HDWI[7]
+  CO_aug[j, i, (1999-1939)] = HDWI_1999$HDWI[8]
+  CO_sep[j, i, (1999-1939)] = HDWI_1999$HDWI[9]
+  CO_oct[j, i, (1999-1939)] = HDWI_1999$HDWI[10]
+  CO_nov[j, i, (1999-1939)] = HDWI_1999$HDWI[11]
+  CO_dec[j, i, (1999-1939)] = HDWI_1999$HDWI[12]
+  }
+}
+```
+
+Year 2000
+
+```{r}
+tower2000 <- nc_open('CO2000.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2000, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2000, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2000, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2000, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2000, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2000, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2000, 't2m')[i, j,]
+
+    data2000 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2000 <- separate(data2000, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2000)
+
+  CO_jan[j, i, (2000 - 1939)] = HDWI_2000$HDWI[1]
+  CO_feb[j, i, (2000 - 1939)] = HDWI_2000$HDWI[2]
+  CO_mar[j, i, (2000 - 1939)] = HDWI_2000$HDWI[3]
+  CO_apr[j, i, (2000 - 1939)] = HDWI_2000$HDWI[4]
+  CO_may[j, i, (2000 - 1939)] = HDWI_2000$HDWI[5]
+  CO_jun[j, i, (2000 - 1939)] = HDWI_2000$HDWI[6]
+  CO_jul[j, i, (2000 - 1939)] = HDWI_2000$HDWI[7]
+  CO_aug[j, i, (2000 - 1939)] = HDWI_2000$HDWI[8]
+  CO_sep[j, i, (2000 - 1939)] = HDWI_2000$HDWI[9]
+  CO_oct[j, i, (2000 - 1939)] = HDWI_2000$HDWI[10]
+  CO_nov[j, i, (2000 - 1939)] = HDWI_2000$HDWI[11]
+  CO_dec[j, i, (2000 - 1939)] = HDWI_2000$HDWI[12]
+  }
+}
+```
+
+Year 2001
+
+```{r}
+tower2001 <- nc_open('CO2001.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2001, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2001, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2001, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2001, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2001, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2001, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2001, 't2m')[i, j,]
+
+    data2001 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2001 <- separate(data2001, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2001)
+
+  CO_jan[j, i, (2001 - 1939)] = HDWI_2001$HDWI[1]
+  CO_feb[j, i, (2001 - 1939)] = HDWI_2001$HDWI[2]
+  CO_mar[j, i, (2001 - 1939)] = HDWI_2001$HDWI[3]
+  CO_apr[j, i, (2001 - 1939)] = HDWI_2001$HDWI[4]
+  CO_may[j, i, (2001 - 1939)] = HDWI_2001$HDWI[5]
+  CO_jun[j, i, (2001 - 1939)] = HDWI_2001$HDWI[6]
+  CO_jul[j, i, (2001 - 1939)] = HDWI_2001$HDWI[7]
+  CO_aug[j, i, (2001 - 1939)] = HDWI_2001$HDWI[8]
+  CO_sep[j, i, (2001 - 1939)] = HDWI_2001$HDWI[9]
+  CO_oct[j, i, (2001 - 1939)] = HDWI_2001$HDWI[10]
+  CO_nov[j, i, (2001 - 1939)] = HDWI_2001$HDWI[11]
+  CO_dec[j, i, (2001 - 1939)] = HDWI_2001$HDWI[12]
+  }
+}
+```
+
+Year 2002
+
+```{r}
+tower2002 <- nc_open('CO2002.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2002, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2002, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2002, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2002, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2002, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2002, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2002, 't2m')[i, j,]
+
+    data2002 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2002 <- separate(data2002, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2002)
+
+  CO_jan[j, i, (2002-1939)] = HDWI_2002$HDWI[1]
+  CO_feb[j, i, (2002-1939)] = HDWI_2002$HDWI[2]
+  CO_mar[j, i, (2002-1939)] = HDWI_2002$HDWI[3]
+  CO_apr[j, i, (2002-1939)] = HDWI_2002$HDWI[4]
+  CO_may[j, i, (2002-1939)] = HDWI_2002$HDWI[5]
+  CO_jun[j, i, (2002-1939)] = HDWI_2002$HDWI[6]
+  CO_jul[j, i, (2002-1939)] = HDWI_2002$HDWI[7]
+  CO_aug[j, i, (2002-1939)] = HDWI_2002$HDWI[8]
+  CO_sep[j, i, (2002-1939)] = HDWI_2002$HDWI[9]
+  CO_oct[j, i, (2002-1939)] = HDWI_2002$HDWI[10]
+  CO_nov[j, i, (2002-1939)] = HDWI_2002$HDWI[11]
+  CO_dec[j, i, (2002-1939)] = HDWI_2002$HDWI[12]
+  }
+}
+```
+
+Year 2003
+
+```{r}
+tower2003 <- nc_open('CO2003.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2003, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2003, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2003, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2003, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2003, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2003, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2003, 't2m')[i, j,]
+
+    data2003 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2003 <- separate(data2003, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2003)
+
+  CO_jan[j, i, (2003-1939)] = HDWI_2003$HDWI[1]
+  CO_feb[j, i, (2003-1939)] = HDWI_2003$HDWI[2]
+  CO_mar[j, i, (2003-1939)] = HDWI_2003$HDWI[3]
+  CO_apr[j, i, (2003-1939)] = HDWI_2003$HDWI[4]
+  CO_may[j, i, (2003-1939)] = HDWI_2003$HDWI[5]
+  CO_jun[j, i, (2003-1939)] = HDWI_2003$HDWI[6]
+  CO_jul[j, i, (2003-1939)] = HDWI_2003$HDWI[7]
+  CO_aug[j, i, (2003-1939)] = HDWI_2003$HDWI[8]
+  CO_sep[j, i, (2003-1939)] = HDWI_2003$HDWI[9]
+  CO_oct[j, i, (2003-1939)] = HDWI_2003$HDWI[10]
+  CO_nov[j, i, (2003-1939)] = HDWI_2003$HDWI[11]
+  CO_dec[j, i, (2003-1939)] = HDWI_2003$HDWI[12]
+  }
+}
+```
+
+Year 2004
+
+```{r}
+tower2004 <- nc_open('CO2004.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2004, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2004, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2004, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2004, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2004, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2004, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2004, 't2m')[i, j,]
+
+    data2004 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2004 <- separate(data2004, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2004)
+
+  CO_jan[j, i, (2004-1939)] = HDWI_2004$HDWI[1]
+  CO_feb[j, i, (2004-1939)] = HDWI_2004$HDWI[2]
+  CO_mar[j, i, (2004-1939)] = HDWI_2004$HDWI[3]
+  CO_apr[j, i, (2004-1939)] = HDWI_2004$HDWI[4]
+  CO_may[j, i, (2004-1939)] = HDWI_2004$HDWI[5]
+  CO_jun[j, i, (2004-1939)] = HDWI_2004$HDWI[6]
+  CO_jul[j, i, (2004-1939)] = HDWI_2004$HDWI[7]
+  CO_aug[j, i, (2004-1939)] = HDWI_2004$HDWI[8]
+  CO_sep[j, i, (2004-1939)] = HDWI_2004$HDWI[9]
+  CO_oct[j, i, (2004-1939)] = HDWI_2004$HDWI[10]
+  CO_nov[j, i, (2004-1939)] = HDWI_2004$HDWI[11]
+  CO_dec[j, i, (2004-1939)] = HDWI_2004$HDWI[12]
+  }
+}
+```
+
+Year 2005
+
+```{r}
+tower2005 <- nc_open('CO2005.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2005, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2005, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2005, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2005, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2005, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2005, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2005, 't2m')[i, j,]
+
+    data2005 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2005 <- separate(data2005, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2005)
+
+  CO_jan[j, i, (2005-1939)] = HDWI_2005$HDWI[1]
+  CO_feb[j, i, (2005-1939)] = HDWI_2005$HDWI[2]
+  CO_mar[j, i, (2005-1939)] = HDWI_2005$HDWI[3]
+  CO_apr[j, i, (2005-1939)] = HDWI_2005$HDWI[4]
+  CO_may[j, i, (2005-1939)] = HDWI_2005$HDWI[5]
+  CO_jun[j, i, (2005-1939)] = HDWI_2005$HDWI[6]
+  CO_jul[j, i, (2005-1939)] = HDWI_2005$HDWI[7]
+  CO_aug[j, i, (2005-1939)] = HDWI_2005$HDWI[8]
+  CO_sep[j, i, (2005-1939)] = HDWI_2005$HDWI[9]
+  CO_oct[j, i, (2005-1939)] = HDWI_2005$HDWI[10]
+  CO_nov[j, i, (2005-1939)] = HDWI_2005$HDWI[11]
+  CO_dec[j, i, (2005-1939)] = HDWI_2005$HDWI[12]
+  }
+}
+```
+
+Year 2006
+
+```{r}
+tower2006 <- nc_open('CO2006.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2006, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2006, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2006, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2006, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2006, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2006, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2006, 't2m')[i, j,]
+
+    data2006 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2006 <- separate(data2006, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2006)
+
+  CO_jan[j, i, (2006-1939)] = HDWI_2006$HDWI[1]
+  CO_feb[j, i, (2006-1939)] = HDWI_2006$HDWI[2]
+  CO_mar[j, i, (2006-1939)] = HDWI_2006$HDWI[3]
+  CO_apr[j, i, (2006-1939)] = HDWI_2006$HDWI[4]
+  CO_may[j, i, (2006-1939)] = HDWI_2006$HDWI[5]
+  CO_jun[j, i, (2006-1939)] = HDWI_2006$HDWI[6]
+  CO_jul[j, i, (2006-1939)] = HDWI_2006$HDWI[7]
+  CO_aug[j, i, (2006-1939)] = HDWI_2006$HDWI[8]
+  CO_sep[j, i, (2006-1939)] = HDWI_2006$HDWI[9]
+  CO_oct[j, i, (2006-1939)] = HDWI_2006$HDWI[10]
+  CO_nov[j, i, (2006-1939)] = HDWI_2006$HDWI[11]
+  CO_dec[j, i, (2006-1939)] = HDWI_2006$HDWI[12]
+  }
+}
+```
+
+Year 2007
+
+```{r}
+tower2007 <- nc_open('CO2007.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2007, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2007, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2007, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2007, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2007, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2007, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2007, 't2m')[i, j,]
+
+    data2007 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2007 <- separate(data2007, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2007)
+
+  CO_jan[j, i, (2007-1939)] = HDWI_2007$HDWI[1]
+  CO_feb[j, i, (2007-1939)] = HDWI_2007$HDWI[2]
+  CO_mar[j, i, (2007-1939)] = HDWI_2007$HDWI[3]
+  CO_apr[j, i, (2007-1939)] = HDWI_2007$HDWI[4]
+  CO_may[j, i, (2007-1939)] = HDWI_2007$HDWI[5]
+  CO_jun[j, i, (2007-1939)] = HDWI_2007$HDWI[6]
+  CO_jul[j, i, (2007-1939)] = HDWI_2007$HDWI[7]
+  CO_aug[j, i, (2007-1939)] = HDWI_2007$HDWI[8]
+  CO_sep[j, i, (2007-1939)] = HDWI_2007$HDWI[9]
+  CO_oct[j, i, (2007-1939)] = HDWI_2007$HDWI[10]
+  CO_nov[j, i, (2007-1939)] = HDWI_2007$HDWI[11]
+  CO_dec[j, i, (2007-1939)] = HDWI_2007$HDWI[12]
+  }
+}
+```
+
+Year 2008
+
+```{r}
+tower2008 <- nc_open('CO2008.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2008, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2008, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2008, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2008, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2008, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2008, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2008, 't2m')[i, j,]
+
+    data2008 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2008 <- separate(data2008, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2008)
+
+  CO_jan[j, i, (2008-1939)] = HDWI_2008$HDWI[1]
+  CO_feb[j, i, (2008-1939)] = HDWI_2008$HDWI[2]
+  CO_mar[j, i, (2008-1939)] = HDWI_2008$HDWI[3]
+  CO_apr[j, i, (2008-1939)] = HDWI_2008$HDWI[4]
+  CO_may[j, i, (2008-1939)] = HDWI_2008$HDWI[5]
+  CO_jun[j, i, (2008-1939)] = HDWI_2008$HDWI[6]
+  CO_jul[j, i, (2008-1939)] = HDWI_2008$HDWI[7]
+  CO_aug[j, i, (2008-1939)] = HDWI_2008$HDWI[8]
+  CO_sep[j, i, (2008-1939)] = HDWI_2008$HDWI[9]
+  CO_oct[j, i, (2008-1939)] = HDWI_2008$HDWI[10]
+  CO_nov[j, i, (2008-1939)] = HDWI_2008$HDWI[11]
+  CO_dec[j, i, (2008-1939)] = HDWI_2008$HDWI[12]
+  }
+}
+```
+
+Year 2009
+
+```{r}
+tower2009 <- nc_open('CO2009.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2009, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2009, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2009, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2009, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2009, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2009, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2009, 't2m')[i, j,]
+
+    data2009 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2009 <- separate(data2009, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2009)
+
+  CO_jan[j, i, (2009-1939)] = HDWI_2009$HDWI[1]
+  CO_feb[j, i, (2009-1939)] = HDWI_2009$HDWI[2]
+  CO_mar[j, i, (2009-1939)] = HDWI_2009$HDWI[3]
+  CO_apr[j, i, (2009-1939)] = HDWI_2009$HDWI[4]
+  CO_may[j, i, (2009-1939)] = HDWI_2009$HDWI[5]
+  CO_jun[j, i, (2009-1939)] = HDWI_2009$HDWI[6]
+  CO_jul[j, i, (2009-1939)] = HDWI_2009$HDWI[7]
+  CO_aug[j, i, (2009-1939)] = HDWI_2009$HDWI[8]
+  CO_sep[j, i, (2009-1939)] = HDWI_2009$HDWI[9]
+  CO_oct[j, i, (2009-1939)] = HDWI_2009$HDWI[10]
+  CO_nov[j, i, (2009-1939)] = HDWI_2009$HDWI[11]
+  CO_dec[j, i, (2009-1939)] = HDWI_2009$HDWI[12]
+  }
+}
+```
+
+Year 2010
+
+```{r}
+tower2010 <- nc_open('CO2010.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2010, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2010, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2010, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2010, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2010, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2010, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2010, 't2m')[i, j,]
+
+    data2010 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2010 <- separate(data2010, date, into = c('year', 'month', 'day')) %>% 
+      
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2010)
+
+  CO_jan[j, i, (2010-1939)] = HDWI_2010$HDWI[1]
+  CO_feb[j, i, (2010-1939)] = HDWI_2010$HDWI[2]
+  CO_mar[j, i, (2010-1939)] = HDWI_2010$HDWI[3]
+  CO_apr[j, i, (2010-1939)] = HDWI_2010$HDWI[4]
+  CO_may[j, i, (2010-1939)] = HDWI_2010$HDWI[5]
+  CO_jun[j, i, (2010-1939)] = HDWI_2010$HDWI[6]
+  CO_jul[j, i, (2010-1939)] = HDWI_2010$HDWI[7]
+  CO_aug[j, i, (2010-1939)] = HDWI_2010$HDWI[8]
+  CO_sep[j, i, (2010-1939)] = HDWI_2010$HDWI[9]
+  CO_oct[j, i, (2010-1939)] = HDWI_2010$HDWI[10]
+  CO_nov[j, i, (2010-1939)] = HDWI_2010$HDWI[11]
+  CO_dec[j, i, (2010-1939)] = HDWI_2010$HDWI[12]
+  }
+}
+```
+
+Year 2011
+
+```{r}
+tower2011 <- nc_open('CO2011.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2011, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2011, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2011, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2011, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2011, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2011, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2011, 't2m')[i, j,]
+
+    data2011 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2011 <- separate(data2011, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2011)
+
+  CO_jan[j, i, (2011-1939)] = HDWI_2011$HDWI[1]
+  CO_feb[j, i, (2011-1939)] = HDWI_2011$HDWI[2]
+  CO_mar[j, i, (2011-1939)] = HDWI_2011$HDWI[3]
+  CO_apr[j, i, (2011-1939)] = HDWI_2011$HDWI[4]
+  CO_may[j, i, (2011-1939)] = HDWI_2011$HDWI[5]
+  CO_jun[j, i, (2011-1939)] = HDWI_2011$HDWI[6]
+  CO_jul[j, i, (2011-1939)] = HDWI_2011$HDWI[7]
+  CO_aug[j, i, (2011-1939)] = HDWI_2011$HDWI[8]
+  CO_sep[j, i, (2011-1939)] = HDWI_2011$HDWI[9]
+  CO_oct[j, i, (2011-1939)] = HDWI_2011$HDWI[10]
+  CO_nov[j, i, (2011-1939)] = HDWI_2011$HDWI[11]
+  CO_dec[j, i, (2011-1939)] = HDWI_2011$HDWI[12]
+  }
+}
+```
+
+Year 2012
+
+```{r}
+tower2012 <- nc_open('CO2012.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2012, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2012, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2012, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2012, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2012, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2012, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2012, 't2m')[i, j,]
+
+    data2012 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2012 <- separate(data2012, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2012)
+
+  CO_jan[j, i, (2012-1939)] = HDWI_2012$HDWI[1]
+  CO_feb[j, i, (2012-1939)] = HDWI_2012$HDWI[2]
+  CO_mar[j, i, (2012-1939)] = HDWI_2012$HDWI[3]
+  CO_apr[j, i, (2012-1939)] = HDWI_2012$HDWI[4]
+  CO_may[j, i, (2012-1939)] = HDWI_2012$HDWI[5]
+  CO_jun[j, i, (2012-1939)] = HDWI_2012$HDWI[6]
+  CO_jul[j, i, (2012-1939)] = HDWI_2012$HDWI[7]
+  CO_aug[j, i, (2012-1939)] = HDWI_2012$HDWI[8]
+  CO_sep[j, i, (2012-1939)] = HDWI_2012$HDWI[9]
+  CO_oct[j, i, (2012-1939)] = HDWI_2012$HDWI[10]
+  CO_nov[j, i, (2012-1939)] = HDWI_2012$HDWI[11]
+  CO_dec[j, i, (2012-1939)] = HDWI_2012$HDWI[12]
+  }
+}
+```
+
+Year 2013
+
+```{r}
+tower2013 <- nc_open('CO2013.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2013, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2013, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2013, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2013, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2013, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2013, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2013, 't2m')[i, j,]
+
+    data2013 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2013 <- separate(data2013, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2013)
+
+  CO_jan[j, i, (2013-1939)] = HDWI_2013$HDWI[1]
+  CO_feb[j, i, (2013-1939)] = HDWI_2013$HDWI[2]
+  CO_mar[j, i, (2013-1939)] = HDWI_2013$HDWI[3]
+  CO_apr[j, i, (2013-1939)] = HDWI_2013$HDWI[4]
+  CO_may[j, i, (2013-1939)] = HDWI_2013$HDWI[5]
+  CO_jun[j, i, (2013-1939)] = HDWI_2013$HDWI[6]
+  CO_jul[j, i, (2013-1939)] = HDWI_2013$HDWI[7]
+  CO_aug[j, i, (2013-1939)] = HDWI_2013$HDWI[8]
+  CO_sep[j, i, (2013-1939)] = HDWI_2013$HDWI[9]
+  CO_oct[j, i, (2013-1939)] = HDWI_2013$HDWI[10]
+  CO_nov[j, i, (2013-1939)] = HDWI_2013$HDWI[11]
+  CO_dec[j, i, (2013-1939)] = HDWI_2013$HDWI[12]
+  }
+}
+```
+
+Year 2014
+
+```{r}
+tower2014 <- nc_open('CO2014.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2014, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2014, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2014, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2014, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2014, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2014, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2014, 't2m')[i, j,]
+
+    data2014 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2014 <- separate(data2014, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2014)
+
+  CO_jan[j, i, (2014-1939)] = HDWI_2014$HDWI[1]
+  CO_feb[j, i, (2014-1939)] = HDWI_2014$HDWI[2]
+  CO_mar[j, i, (2014-1939)] = HDWI_2014$HDWI[3]
+  CO_apr[j, i, (2014-1939)] = HDWI_2014$HDWI[4]
+  CO_may[j, i, (2014-1939)] = HDWI_2014$HDWI[5]
+  CO_jun[j, i, (2014-1939)] = HDWI_2014$HDWI[6]
+  CO_jul[j, i, (2014-1939)] = HDWI_2014$HDWI[7]
+  CO_aug[j, i, (2014-1939)] = HDWI_2014$HDWI[8]
+  CO_sep[j, i, (2014-1939)] = HDWI_2014$HDWI[9]
+  CO_oct[j, i, (2014-1939)] = HDWI_2014$HDWI[10]
+  CO_nov[j, i, (2014-1939)] = HDWI_2014$HDWI[11]
+  CO_dec[j, i, (2014-1939)] = HDWI_2014$HDWI[12]
+  }
+}
+```
+
+Year 2015
+
+```{r}
+tower2015 <- nc_open('CO2015.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2015, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2015, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2015, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2015, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2015, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2015, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2015, 't2m')[i, j,]
+
+    data2015 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2015 <- separate(data2015, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2015)
+
+  CO_jan[j, i, (2015-1939)] = HDWI_2015$HDWI[1]
+  CO_feb[j, i, (2015-1939)] = HDWI_2015$HDWI[2]
+  CO_mar[j, i, (2015-1939)] = HDWI_2015$HDWI[3]
+  CO_apr[j, i, (2015-1939)] = HDWI_2015$HDWI[4]
+  CO_may[j, i, (2015-1939)] = HDWI_2015$HDWI[5]
+  CO_jun[j, i, (2015-1939)] = HDWI_2015$HDWI[6]
+  CO_jul[j, i, (2015-1939)] = HDWI_2015$HDWI[7]
+  CO_aug[j, i, (2015-1939)] = HDWI_2015$HDWI[8]
+  CO_sep[j, i, (2015-1939)] = HDWI_2015$HDWI[9]
+  CO_oct[j, i, (2015-1939)] = HDWI_2015$HDWI[10]
+  CO_nov[j, i, (2015-1939)] = HDWI_2015$HDWI[11]
+  CO_dec[j, i, (2015-1939)] = HDWI_2015$HDWI[12]
+  }
+}
+```
+
+Year 2016
+
+```{r}
+tower2016 <- nc_open('CO2016.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2016, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2016, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2016, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2016, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2016, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2016, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2016, 't2m')[i, j,]
+
+    data2016 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2016 <- separate(data2016, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2016)
+
+  CO_jan[j, i, (2016-1939)] = HDWI_2016$HDWI[1]
+  CO_feb[j, i, (2016-1939)] = HDWI_2016$HDWI[2]
+  CO_mar[j, i, (2016-1939)] = HDWI_2016$HDWI[3]
+  CO_apr[j, i, (2016-1939)] = HDWI_2016$HDWI[4]
+  CO_may[j, i, (2016-1939)] = HDWI_2016$HDWI[5]
+  CO_jun[j, i, (2016-1939)] = HDWI_2016$HDWI[6]
+  CO_jul[j, i, (2016-1939)] = HDWI_2016$HDWI[7]
+  CO_aug[j, i, (2016-1939)] = HDWI_2016$HDWI[8]
+  CO_sep[j, i, (2016-1939)] = HDWI_2016$HDWI[9]
+  CO_oct[j, i, (2016-1939)] = HDWI_2016$HDWI[10]
+  CO_nov[j, i, (2016-1939)] = HDWI_2016$HDWI[11]
+  CO_dec[j, i, (2016-1939)] = HDWI_2016$HDWI[12]
+  }
+}
+```
+
+Year 2017
+
+```{r}
+tower2017 <- nc_open('CO2017.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2017, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2017, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2017, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2017, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2017, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2017, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2017, 't2m')[i, j,]
+
+    data2017 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2017 <- separate(data2017, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2017)
+
+  CO_jan[j, i, (2017-1939)] = HDWI_2017$HDWI[1]
+  CO_feb[j, i, (2017-1939)] = HDWI_2017$HDWI[2]
+  CO_mar[j, i, (2017-1939)] = HDWI_2017$HDWI[3]
+  CO_apr[j, i, (2017-1939)] = HDWI_2017$HDWI[4]
+  CO_may[j, i, (2017-1939)] = HDWI_2017$HDWI[5]
+  CO_jun[j, i, (2017-1939)] = HDWI_2017$HDWI[6]
+  CO_jul[j, i, (2017-1939)] = HDWI_2017$HDWI[7]
+  CO_aug[j, i, (2017-1939)] = HDWI_2017$HDWI[8]
+  CO_sep[j, i, (2017-1939)] = HDWI_2017$HDWI[9]
+  CO_oct[j, i, (2017-1939)] = HDWI_2017$HDWI[10]
+  CO_nov[j, i, (2017-1939)] = HDWI_2017$HDWI[11]
+  CO_dec[j, i, (2017-1939)] = HDWI_2017$HDWI[12]
+  }
+}
+```
+
+Year 2018
+
+```{r}
+tower2018 <- nc_open('CO2018.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2018, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2018, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2018, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2018, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2018, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2018, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2018, 't2m')[i, j,]
+
+    data2018 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2018 <- separate(data2018, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2018)
+
+  CO_jan[j, i, (2018-1939)] = HDWI_2018$HDWI[1]
+  CO_feb[j, i, (2018-1939)] = HDWI_2018$HDWI[2]
+  CO_mar[j, i, (2018-1939)] = HDWI_2018$HDWI[3]
+  CO_apr[j, i, (2018-1939)] = HDWI_2018$HDWI[4]
+  CO_may[j, i, (2018-1939)] = HDWI_2018$HDWI[5]
+  CO_jun[j, i, (2018-1939)] = HDWI_2018$HDWI[6]
+  CO_jul[j, i, (2018-1939)] = HDWI_2018$HDWI[7]
+  CO_aug[j, i, (2018-1939)] = HDWI_2018$HDWI[8]
+  CO_sep[j, i, (2018-1939)] = HDWI_2018$HDWI[9]
+  CO_oct[j, i, (2018-1939)] = HDWI_2018$HDWI[10]
+  CO_nov[j, i, (2018-1939)] = HDWI_2018$HDWI[11]
+  CO_dec[j, i, (2018-1939)] = HDWI_2018$HDWI[12]
+  }
+}
+```
+
+Year 2019
+
+```{r}
+tower2019 <- nc_open('CO2019.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2019, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2019, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2019, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2019, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2019, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2019, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2019, 't2m')[i, j,]
+
+    data2019 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2019 <- separate(data2019, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2019)
+
+  CO_jan[j, i, (2019-1939)] = HDWI_2019$HDWI[1]
+  CO_feb[j, i, (2019-1939)] = HDWI_2019$HDWI[2]
+  CO_mar[j, i, (2019-1939)] = HDWI_2019$HDWI[3]
+  CO_apr[j, i, (2019-1939)] = HDWI_2019$HDWI[4]
+  CO_may[j, i, (2019-1939)] = HDWI_2019$HDWI[5]
+  CO_jun[j, i, (2019-1939)] = HDWI_2019$HDWI[6]
+  CO_jul[j, i, (2019-1939)] = HDWI_2019$HDWI[7]
+  CO_aug[j, i, (2019-1939)] = HDWI_2019$HDWI[8]
+  CO_sep[j, i, (2019-1939)] = HDWI_2019$HDWI[9]
+  CO_oct[j, i, (2019-1939)] = HDWI_2019$HDWI[10]
+  CO_nov[j, i, (2019-1939)] = HDWI_2019$HDWI[11]
+  CO_dec[j, i, (2019-1939)] = HDWI_2019$HDWI[12]
+  }
+}
+```
+
+Year 2020
+
+```{r}
+tower2020 <- nc_open('CO2020.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2020, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2020, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2020, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2020, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2020, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2020, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2020, 't2m')[i, j,]
+
+    data2020 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2020 <- separate(data2020, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2020)
+
+  CO_jan[j, i, (2020 - 1939)] = HDWI_2020$HDWI[1]
+  CO_feb[j, i, (2020 - 1939)] = HDWI_2020$HDWI[2]
+  CO_mar[j, i, (2020 - 1939)] = HDWI_2020$HDWI[3]
+  CO_apr[j, i, (2020 - 1939)] = HDWI_2020$HDWI[4]
+  CO_may[j, i, (2020 - 1939)] = HDWI_2020$HDWI[5]
+  CO_jun[j, i, (2020 - 1939)] = HDWI_2020$HDWI[6]
+  CO_jul[j, i, (2020 - 1939)] = HDWI_2020$HDWI[7]
+  CO_aug[j, i, (2020 - 1939)] = HDWI_2020$HDWI[8]
+  CO_sep[j, i, (2020 - 1939)] = HDWI_2020$HDWI[9]
+  CO_oct[j, i, (2020 - 1939)] = HDWI_2020$HDWI[10]
+  CO_nov[j, i, (2020 - 1939)] = HDWI_2020$HDWI[11]
+  CO_dec[j, i, (2020 - 1939)] = HDWI_2020$HDWI[12]
+  }
+}
+```
+
+Year 2021
+
+```{r}
+tower2021 <- nc_open('CO2021.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2021, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2021, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2021, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2021, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2021, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2021, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2021, 't2m')[i, j,]
+
+    data2021 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2021 <- separate(data2021, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2021)
+
+  CO_jan[j, i, (2021 - 1939)] = HDWI_2021$HDWI[1]
+  CO_feb[j, i, (2021 - 1939)] = HDWI_2021$HDWI[2]
+  CO_mar[j, i, (2021 - 1939)] = HDWI_2021$HDWI[3]
+  CO_apr[j, i, (2021 - 1939)] = HDWI_2021$HDWI[4]
+  CO_may[j, i, (2021 - 1939)] = HDWI_2021$HDWI[5]
+  CO_jun[j, i, (2021 - 1939)] = HDWI_2021$HDWI[6]
+  CO_jul[j, i, (2021 - 1939)] = HDWI_2021$HDWI[7]
+  CO_aug[j, i, (2021 - 1939)] = HDWI_2021$HDWI[8]
+  CO_sep[j, i, (2021 - 1939)] = HDWI_2021$HDWI[9]
+  CO_oct[j, i, (2021 - 1939)] = HDWI_2021$HDWI[10]
+  CO_nov[j, i, (2021 - 1939)] = HDWI_2021$HDWI[11]
+  CO_dec[j, i, (2021 - 1939)] = HDWI_2021$HDWI[12]
+  }
+}
+```
+
+Year 2022
+
+```{r}
+tower2022 <- nc_open('CO2022.nc')
+```
+
+```{r}
+for (i in 1:29){
+  for (j in 1:17) {
+    tower_u100 <- ncvar_get(tower2022, 'u100')[i, j,] 
+    tower_v100 <- ncvar_get(tower2022, 'v100')[i, j,]
+    tower_u10 <- ncvar_get(tower2022, 'u10')[i, j,]
+    tower_v10 <- ncvar_get(tower2022, 'v10')[i, j,]
+
+    data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+    colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+    data1$time1 = ncvar_get(tower2022, "time")
+    data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+    data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+    data1$dew_point = ncvar_get(tower2022, 'd2m')[i, j,]
+    data1$temp = ncvar_get(tower2022, 't2m')[i, j,]
+
+    data2022 <- data1 %>%
+      mutate(time2 = time1 - 1069440) %>%
+      mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+      mutate(day = floor(time2/24) + 1) %>%
+      mutate(hour = time2 %% 24) %>%
+      mutate(max_wind = pmax(wind10, wind100)) %>%
+      mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+      group_by(date) %>% summarize_at(c('VPD_hPa','max_wind'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+
+  HDWI_2022 <- separate(data2022, date, into = c('year', 'month', 'day')) %>% 
+      group_by(month) %>%
+      summarize_at('HDWI', q95) #%>% mutate(year = 2022)
+
+  CO_jan[j, i, (2022-1939)] = HDWI_2022$HDWI[1]
+  CO_feb[j, i, (2022-1939)] = HDWI_2022$HDWI[2]
+  CO_mar[j, i, (2022-1939)] = HDWI_2022$HDWI[3]
+  CO_apr[j, i, (2022-1939)] = HDWI_2022$HDWI[4]
+  CO_may[j, i, (2022-1939)] = HDWI_2022$HDWI[5]
+  CO_jun[j, i, (2022-1939)] = HDWI_2022$HDWI[6]
+  CO_jul[j, i, (2022-1939)] = HDWI_2022$HDWI[7]
+  CO_aug[j, i, (2022-1939)] = HDWI_2022$HDWI[8]
+  CO_sep[j, i, (2022-1939)] = HDWI_2022$HDWI[9]
+  CO_oct[j, i, (2022-1939)] = HDWI_2022$HDWI[10]
+  CO_nov[j, i, (2022-1939)] = HDWI_2022$HDWI[11]
+  CO_dec[j, i, (2022-1939)] = HDWI_2022$HDWI[12]
+  }
+}
+```
+
+```{r}
+save(CO_jan, CO_feb, CO_mar, CO_apr, CO_may, CO_jun, CO_jul, CO_aug, CO_sep, CO_oct, CO_nov, CO_dec, file = "CO95HDWI.RData")
+```
