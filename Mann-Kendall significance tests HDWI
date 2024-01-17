@@ -1,0 +1,686 @@
+```{r}
+library(dplyr)
+library(kableExtra)
+library(ggplot2)
+library(Kendall)
+library(fume)
+```
+
+```{r}
+obsHDWI <- read.csv('OBSERVATIONAL-HDWI-TITLE.csv')
+reHDWI <- read.csv('REANALYSIS-HDWI-TITLE.csv')
+```
+
+```{r}
+q95 <- function(x) {
+  return(quantile(x, .95))
+  }
+q75 <- function(x) {
+  return(quantile(x, .75))
+}
+q25 <- function(x) {
+  return(quantile(x, .25))
+  }
+q05 <- function(x) {
+  return(quantile(x, .05))
+}
+```
+
+```{r}
+max_HDWI.obs <- obsHDWI %>% 
+  mutate(month = as.numeric(month))%>%
+  mutate(year = as.numeric(year))%>%
+  group_by(month, year) %>%
+  summarize_at('HDW', max) 
+
+p95_HDWI.obs <- obsHDWI %>% 
+  mutate(month = as.numeric(month))%>%
+  group_by(month, year) %>%
+  summarize_at('HDW', q95) 
+
+p75_HDWI.obs <- obsHDWI %>% 
+  mutate(month = as.numeric(month))%>%
+  group_by(month, year) %>%
+  summarize_at('HDW', q75)
+
+med_HDWI.obs <- obsHDWI %>% 
+  mutate(month = as.numeric(month))%>%
+  group_by(month, year) %>%
+  summarize_at('HDW', median) 
+
+p25_HDWI.obs <- obsHDWI %>% 
+  mutate(month = as.numeric(month))%>%
+  group_by(month, year) %>%
+  summarize_at('HDW', q25) 
+
+p05_HDWI.obs <- obsHDWI %>% 
+  mutate(month = as.numeric(month))%>%
+  group_by(month, year) %>%
+  summarize_at('HDW', q05)
+
+min_HDWI.obs <- obsHDWI %>% 
+  mutate(month = as.numeric(month))%>%
+  group_by(month, year) %>%
+  summarize_at('HDW', min) 
+```
+
+```{r}
+HDWI.obs_pctl <- max_HDWI.obs %>% 
+  ungroup() %>%
+  mutate(HDW_min = min_HDWI.obs$HDW) %>%
+  mutate(HDW_5 = p05_HDWI.obs$HDW) %>%
+  mutate(HDW_25 = p25_HDWI.obs$HDW) %>%
+  mutate(HDW_50 = med_HDWI.obs$HDW) %>%
+  mutate(HDW_75 = p75_HDWI.obs$HDW) %>%
+  mutate(HDW_95 = p95_HDWI.obs$HDW) %>%
+  mutate(HDW_max = max_HDWI.obs$HDW) %>%
+  mutate(Year = year) %>%
+  dplyr::select(-HDW, -year)
+```
+
+```{r}
+max_HDWI.re <- reHDWI %>% 
+  mutate(month = as.numeric(month))%>%
+  mutate(year = as.numeric(year))%>%
+  group_by(month, year) %>%
+  summarize_at('HDW', max) 
+
+p95_HDWI.re <- reHDWI %>% 
+  mutate(month = as.numeric(month))%>%
+  group_by(month, year) %>%
+  summarize_at('HDW', q95) 
+
+p75_HDWI.re <- reHDWI %>% 
+  mutate(month = as.numeric(month))%>%
+  group_by(month, year) %>%
+  summarize_at('HDW', q75)
+
+med_HDWI.re <- reHDWI %>% 
+  mutate(month = as.numeric(month))%>%
+  group_by(month, year) %>%
+  summarize_at('HDW', median) 
+
+p25_HDWI.re <- reHDWI %>% 
+  mutate(month = as.numeric(month))%>%
+  group_by(month, year) %>%
+  summarize_at('HDW', q25) 
+
+p05_HDWI.re <- reHDWI %>% 
+  mutate(month = as.numeric(month))%>%
+  group_by(month, year) %>%
+  summarize_at('HDW', q05)
+
+min_HDWI.re <- reHDWI %>% 
+  mutate(month = as.numeric(month))%>%
+  group_by(month, year) %>%
+  summarize_at('HDW', min) 
+```
+
+```{r}
+HDWI.re_pctl <- max_HDWI.re %>% 
+  ungroup() %>%
+  mutate(HDW_min = min_HDWI.re$HDW) %>%
+  mutate(HDW_5 = p05_HDWI.re$HDW) %>%
+  mutate(HDW_25 = p25_HDWI.re$HDW) %>%
+  mutate(HDW_50 = med_HDWI.re$HDW) %>%
+  mutate(HDW_75 = p75_HDWI.re$HDW) %>%
+  mutate(HDW_95 = p95_HDWI.re$HDW) %>%
+  mutate(HDW_max = max_HDWI.re$HDW) %>%
+  mutate(Year = year) %>%
+  dplyr::select(-HDW, -year)
+```
+
+```{r}
+jan_HDWI.obs <- filter(HDWI.obs_pctl, month==1)
+feb_HDWI.obs <- filter(HDWI.obs_pctl, month==2)
+mar_HDWI.obs <- filter(HDWI.obs_pctl, month==3)
+apr_HDWI.obs <- filter(HDWI.obs_pctl, month==4)
+may_HDWI.obs <- filter(HDWI.obs_pctl, month==5)
+jun_HDWI.obs <- filter(HDWI.obs_pctl, month==6)
+jul_HDWI.obs <- filter(HDWI.obs_pctl, month==7)
+aug_HDWI.obs <- filter(HDWI.obs_pctl, month==8)
+sep_HDWI.obs <- filter(HDWI.obs_pctl, month==9)
+oct_HDWI.obs <- filter(HDWI.obs_pctl, month==10)
+nov_HDWI.obs <- filter(HDWI.obs_pctl, month==11)
+dec_HDWI.obs <- filter(HDWI.obs_pctl, month==12)
+```
+
+```{r}
+jan_HDWI.re <- filter(HDWI.re_pctl, month==1)
+feb_HDWI.re <- filter(HDWI.re_pctl, month==2)
+mar_HDWI.re <- filter(HDWI.re_pctl, month==3)
+apr_HDWI.re <- filter(HDWI.re_pctl, month==4)
+may_HDWI.re <- filter(HDWI.re_pctl, month==5)
+jun_HDWI.re <- filter(HDWI.re_pctl, month==6)
+jul_HDWI.re <- filter(HDWI.re_pctl, month==7)
+aug_HDWI.re <- filter(HDWI.re_pctl, month==8)
+sep_HDWI.re <- filter(HDWI.re_pctl, month==9)
+oct_HDWI.re <- filter(HDWI.re_pctl, month==10)
+nov_HDWI.re <- filter(HDWI.re_pctl, month==11)
+dec_HDWI.re <- filter(HDWI.re_pctl, month==12)
+```
+
+OBSERVATIONAL TABLES
+
+```{r results = FALSE}
+pvals_adj <- data.frame(matrix(nrow = 12, ncol = 5), row.names = c('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'))
+colnames(pvals_adj) = c('5th Percentile','25th Percentile','50th Percentile','75th Percentile','95th Percentile')
+
+pval_sign.adj <- data.frame(matrix(nrow = 12, ncol = 5), row.names = c('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'))
+colnames(pval_sign.adj) = c('5th Percentile','25th Percentile','50th Percentile','75th Percentile','95th Percentile')
+```
+
+```{r results = FALSE}
+pvals_adj[1,1] <- round(mkTrend(jan_HDWI.obs$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[2,1] <- round(mkTrend(feb_HDWI.obs$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[3,1] <- round(mkTrend(mar_HDWI.obs$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[4,1] <- round(mkTrend(apr_HDWI.obs$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[5,1] <- round(mkTrend(may_HDWI.obs$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[6,1] <- round(mkTrend(jun_HDWI.obs$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[7,1] <- round(mkTrend(jul_HDWI.obs$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[8,1] <- round(mkTrend(aug_HDWI.obs$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[9,1] <- round(mkTrend(sep_HDWI.obs$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[10,1] <- round(mkTrend(oct_HDWI.obs$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[11,1] <- round(mkTrend(nov_HDWI.obs$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[12,1] <- round(mkTrend(dec_HDWI.obs$HDW_5)$`Corrected p.value`, 3)
+```
+
+```{r results = FALSE}
+pvals_adj[1,2] <- round(mkTrend(jan_HDWI.obs$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[2,2] <- round(mkTrend(feb_HDWI.obs$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[3,2] <- round(mkTrend(mar_HDWI.obs$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[4,2] <- round(mkTrend(apr_HDWI.obs$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[5,2] <- round(mkTrend(may_HDWI.obs$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[6,2] <- round(mkTrend(jun_HDWI.obs$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[7,2] <- round(mkTrend(jul_HDWI.obs$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[8,2] <- round(mkTrend(aug_HDWI.obs$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[9,2] <- round(mkTrend(sep_HDWI.obs$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[10,2] <- round(mkTrend(oct_HDWI.obs$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[11,2] <- round(mkTrend(nov_HDWI.obs$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[12,2] <- round(mkTrend(dec_HDWI.obs$HDW_25)$`Corrected p.value`, 3)
+```
+
+```{r results = FALSE}
+pvals_adj[1,3] <- round(mkTrend(jan_HDWI.obs$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[2,3] <- round(mkTrend(feb_HDWI.obs$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[3,3] <- round(mkTrend(mar_HDWI.obs$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[4,3] <- round(mkTrend(apr_HDWI.obs$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[5,3] <- round(mkTrend(may_HDWI.obs$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[6,3] <- round(mkTrend(jun_HDWI.obs$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[7,3] <- round(mkTrend(jul_HDWI.obs$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[8,3] <- round(mkTrend(aug_HDWI.obs$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[9,3] <- round(mkTrend(sep_HDWI.obs$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[10,3] <- round(mkTrend(oct_HDWI.obs$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[11,3] <- round(mkTrend(nov_HDWI.obs$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[12,3] <- round(mkTrend(dec_HDWI.obs$HDW_50)$`Corrected p.value`, 3)
+```
+
+```{r results = FALSE}
+pvals_adj[1,4] <- round(mkTrend(jan_HDWI.obs$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[2,4] <- round(mkTrend(feb_HDWI.obs$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[3,4] <- round(mkTrend(mar_HDWI.obs$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[4,4] <- round(mkTrend(apr_HDWI.obs$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[5,4] <- round(mkTrend(may_HDWI.obs$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[6,4] <- round(mkTrend(jun_HDWI.obs$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[7,4] <- round(mkTrend(jul_HDWI.obs$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[8,4] <- round(mkTrend(aug_HDWI.obs$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[9,4] <- round(mkTrend(sep_HDWI.obs$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[10,4] <- round(mkTrend(oct_HDWI.obs$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[11,4] <- round(mkTrend(nov_HDWI.obs$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[12,4] <- round(mkTrend(dec_HDWI.obs$HDW_75)$`Corrected p.value`, 3)
+pvals_adj
+```
+
+```{r results = FALSE}
+pvals_adj[1,5] <- round(mkTrend(jan_HDWI.obs$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[2,5] <- round(mkTrend(feb_HDWI.obs$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[3,5] <- round(mkTrend(mar_HDWI.obs$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[4,5] <- round(mkTrend(apr_HDWI.obs$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[5,5] <- round(mkTrend(may_HDWI.obs$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[6,5] <- round(mkTrend(jun_HDWI.obs$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[7,5] <- round(mkTrend(jul_HDWI.obs$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[8,5] <- round(mkTrend(aug_HDWI.obs$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[9,5] <- round(mkTrend(sep_HDWI.obs$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[10,5] <- round(mkTrend(oct_HDWI.obs$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[11,5] <- round(mkTrend(nov_HDWI.obs$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[12,5] <- round(mkTrend(dec_HDWI.obs$HDW_95)$`Corrected p.value`, 3)
+pvals_adj
+```
+
+```{r results = FALSE}
+pval_sign.adj[1,1] <- abs(mkTrend(jan_HDWI.obs$HDW_5)$tau[1])/mkTrend(jan_HDWI.obs$HDW_5)$tau[1]
+pval_sign.adj[2,1] <- abs(mkTrend(feb_HDWI.obs$HDW_5)$tau[1])/mkTrend(feb_HDWI.obs$HDW_5)$tau[1]
+pval_sign.adj[3,1] <- abs(mkTrend(mar_HDWI.obs$HDW_5)$tau[1])/mkTrend(mar_HDWI.obs$HDW_5)$tau[1]
+pval_sign.adj[4,1] <- abs(mkTrend(apr_HDWI.obs$HDW_5)$tau[1])/mkTrend(apr_HDWI.obs$HDW_5)$tau[1]
+pval_sign.adj[5,1] <- abs(mkTrend(may_HDWI.obs$HDW_5)$tau[1])/mkTrend(may_HDWI.obs$HDW_5)$tau[1]
+pval_sign.adj[6,1] <- abs(mkTrend(jun_HDWI.obs$HDW_5)$tau[1])/mkTrend(jun_HDWI.obs$HDW_5)$tau[1]
+pval_sign.adj[7,1] <- abs(mkTrend(jul_HDWI.obs$HDW_5)$tau[1])/mkTrend(jul_HDWI.obs$HDW_5)$tau[1]
+pval_sign.adj[8,1] <- abs(mkTrend(aug_HDWI.obs$HDW_5)$tau[1])/mkTrend(aug_HDWI.obs$HDW_5)$tau[1]
+pval_sign.adj[9,1] <- abs(mkTrend(sep_HDWI.obs$HDW_5)$tau[1])/mkTrend(sep_HDWI.obs$HDW_5)$tau[1]
+pval_sign.adj[10,1] <- abs(mkTrend(oct_HDWI.obs$HDW_5)$tau[1])/mkTrend(oct_HDWI.obs$HDW_5)$tau[1]
+pval_sign.adj[11,1] <- abs(mkTrend(nov_HDWI.obs$HDW_5)$tau[1])/mkTrend(nov_HDWI.obs$HDW_5)$tau[1]
+pval_sign.adj[12,1] <- abs(mkTrend(dec_HDWI.obs$HDW_5)$tau[1])/mkTrend(dec_HDWI.obs$HDW_5)$tau[1]
+```
+
+```{r results = FALSE}
+pval_sign.adj[1,2] <- abs(mkTrend(jan_HDWI.obs$HDW_25)$tau[1])/mkTrend(jan_HDWI.obs$HDW_25)$tau[1]
+pval_sign.adj[2,2] <- abs(mkTrend(feb_HDWI.obs$HDW_25)$tau[1])/mkTrend(feb_HDWI.obs$HDW_25)$tau[1]
+pval_sign.adj[3,2] <- abs(mkTrend(mar_HDWI.obs$HDW_25)$tau[1])/mkTrend(mar_HDWI.obs$HDW_25)$tau[1]
+pval_sign.adj[4,2] <- abs(mkTrend(apr_HDWI.obs$HDW_25)$tau[1])/mkTrend(apr_HDWI.obs$HDW_25)$tau[1]
+pval_sign.adj[5,2] <- abs(mkTrend(may_HDWI.obs$HDW_25)$tau[1])/mkTrend(may_HDWI.obs$HDW_25)$tau[1]
+pval_sign.adj[6,2] <- abs(mkTrend(jun_HDWI.obs$HDW_25)$tau[1])/mkTrend(jun_HDWI.obs$HDW_25)$tau[1]
+pval_sign.adj[7,2] <- abs(mkTrend(jul_HDWI.obs$HDW_25)$tau[1])/mkTrend(jul_HDWI.obs$HDW_25)$tau[1]
+pval_sign.adj[8,2] <- abs(mkTrend(aug_HDWI.obs$HDW_25)$tau[1])/mkTrend(aug_HDWI.obs$HDW_25)$tau[1]
+pval_sign.adj[9,2] <- abs(mkTrend(sep_HDWI.obs$HDW_25)$tau[1])/mkTrend(sep_HDWI.obs$HDW_25)$tau[1]
+pval_sign.adj[10,2] <- abs(mkTrend(oct_HDWI.obs$HDW_25)$tau[1])/mkTrend(oct_HDWI.obs$HDW_25)$tau[1]
+pval_sign.adj[11,2] <- abs(mkTrend(nov_HDWI.obs$HDW_25)$tau[1])/mkTrend(nov_HDWI.obs$HDW_25)$tau[1]
+pval_sign.adj[12,2] <- abs(mkTrend(dec_HDWI.obs$HDW_25)$tau[1])/mkTrend(dec_HDWI.obs$HDW_25)$tau[1]
+```
+
+```{r results = FALSE}
+pval_sign.adj[1,3] <- abs(mkTrend(jan_HDWI.obs$HDW_50)$tau[1])/mkTrend(jan_HDWI.obs$HDW_50)$tau[1]
+pval_sign.adj[2,3] <- abs(mkTrend(feb_HDWI.obs$HDW_50)$tau[1])/mkTrend(feb_HDWI.obs$HDW_50)$tau[1]
+pval_sign.adj[3,3] <- abs(mkTrend(mar_HDWI.obs$HDW_50)$tau[1])/mkTrend(mar_HDWI.obs$HDW_50)$tau[1]
+pval_sign.adj[4,3] <- abs(mkTrend(apr_HDWI.obs$HDW_50)$tau[1])/mkTrend(apr_HDWI.obs$HDW_50)$tau[1]
+pval_sign.adj[5,3] <- abs(mkTrend(may_HDWI.obs$HDW_50)$tau[1])/mkTrend(may_HDWI.obs$HDW_50)$tau[1]
+pval_sign.adj[6,3] <- abs(mkTrend(jun_HDWI.obs$HDW_50)$tau[1])/mkTrend(jun_HDWI.obs$HDW_50)$tau[1]
+pval_sign.adj[7,3] <- abs(mkTrend(jul_HDWI.obs$HDW_50)$tau[1])/mkTrend(jul_HDWI.obs$HDW_50)$tau[1]
+pval_sign.adj[8,3] <- abs(mkTrend(aug_HDWI.obs$HDW_50)$tau[1])/mkTrend(aug_HDWI.obs$HDW_50)$tau[1]
+pval_sign.adj[9,3] <- abs(mkTrend(sep_HDWI.obs$HDW_50)$tau[1])/mkTrend(sep_HDWI.obs$HDW_50)$tau[1]
+pval_sign.adj[10,3] <- abs(mkTrend(oct_HDWI.obs$HDW_50)$tau[1])/mkTrend(oct_HDWI.obs$HDW_50)$tau[1]
+pval_sign.adj[11,3] <- abs(mkTrend(nov_HDWI.obs$HDW_50)$tau[1])/mkTrend(nov_HDWI.obs$HDW_50)$tau[1]
+pval_sign.adj[12,3] <- abs(mkTrend(dec_HDWI.obs$HDW_50)$tau[1])/mkTrend(dec_HDWI.obs$HDW_50)$tau[1]
+```
+
+```{r results = FALSE}
+pval_sign.adj[1,4] <- abs(mkTrend(jan_HDWI.obs$HDW_75)$tau[1])/mkTrend(jan_HDWI.obs$HDW_75)$tau[1]
+pval_sign.adj[2,4] <- abs(mkTrend(feb_HDWI.obs$HDW_75)$tau[1])/mkTrend(feb_HDWI.obs$HDW_75)$tau[1]
+pval_sign.adj[3,4] <- abs(mkTrend(mar_HDWI.obs$HDW_75)$tau[1])/mkTrend(mar_HDWI.obs$HDW_75)$tau[1]
+pval_sign.adj[4,4] <- abs(mkTrend(apr_HDWI.obs$HDW_75)$tau[1])/mkTrend(apr_HDWI.obs$HDW_75)$tau[1]
+pval_sign.adj[5,4] <- abs(mkTrend(may_HDWI.obs$HDW_75)$tau[1])/mkTrend(may_HDWI.obs$HDW_75)$tau[1]
+pval_sign.adj[6,4] <- abs(mkTrend(jun_HDWI.obs$HDW_75)$tau[1])/mkTrend(jun_HDWI.obs$HDW_75)$tau[1]
+pval_sign.adj[7,4] <- abs(mkTrend(jul_HDWI.obs$HDW_75)$tau[1])/mkTrend(jul_HDWI.obs$HDW_75)$tau[1]
+pval_sign.adj[8,4] <- abs(mkTrend(aug_HDWI.obs$HDW_75)$tau[1])/mkTrend(aug_HDWI.obs$HDW_75)$tau[1]
+pval_sign.adj[9,4] <- abs(mkTrend(sep_HDWI.obs$HDW_75)$tau[1])/mkTrend(sep_HDWI.obs$HDW_75)$tau[1]
+pval_sign.adj[10,4] <- abs(mkTrend(oct_HDWI.obs$HDW_75)$tau[1])/mkTrend(oct_HDWI.obs$HDW_75)$tau[1]
+pval_sign.adj[11,4] <- abs(mkTrend(nov_HDWI.obs$HDW_75)$tau[1])/mkTrend(nov_HDWI.obs$HDW_75)$tau[1]
+pval_sign.adj[12,4] <- abs(mkTrend(dec_HDWI.obs$HDW_75)$tau[1])/mkTrend(dec_HDWI.obs$HDW_75)$tau[1]
+```
+
+```{r}
+pval_sign.adj[1,5] <- abs(mkTrend(jan_HDWI.obs$HDW_95)$tau[1])/mkTrend(jan_HDWI.obs$HDW_95)$tau[1]
+pval_sign.adj[2,5] <- abs(mkTrend(feb_HDWI.obs$HDW_95)$tau[1])/mkTrend(feb_HDWI.obs$HDW_95)$tau[1]
+pval_sign.adj[3,5] <- abs(mkTrend(mar_HDWI.obs$HDW_95)$tau[1])/mkTrend(mar_HDWI.obs$HDW_95)$tau[1]
+pval_sign.adj[4,5] <- abs(mkTrend(apr_HDWI.obs$HDW_95)$tau[1])/mkTrend(apr_HDWI.obs$HDW_95)$tau[1]
+pval_sign.adj[5,5] <- abs(mkTrend(may_HDWI.obs$HDW_95)$tau[1])/mkTrend(may_HDWI.obs$HDW_95)$tau[1]
+pval_sign.adj[6,5] <- abs(mkTrend(jun_HDWI.obs$HDW_95)$tau[1])/mkTrend(jun_HDWI.obs$HDW_95)$tau[1]
+pval_sign.adj[7,5] <- abs(mkTrend(jul_HDWI.obs$HDW_95)$tau[1])/mkTrend(jul_HDWI.obs$HDW_95)$tau[1]
+pval_sign.adj[8,5] <- abs(mkTrend(aug_HDWI.obs$HDW_95)$tau[1])/mkTrend(aug_HDWI.obs$HDW_95)$tau[1]
+pval_sign.adj[9,5] <- abs(mkTrend(sep_HDWI.obs$HDW_95)$tau[1])/mkTrend(sep_HDWI.obs$HDW_95)$tau[1]
+pval_sign.adj[10,5] <- abs(mkTrend(oct_HDWI.obs$HDW_95)$tau[1])/mkTrend(oct_HDWI.obs$HDW_95)$tau[1]
+pval_sign.adj[11,5] <- abs(mkTrend(nov_HDWI.obs$HDW_95)$tau[1])/mkTrend(nov_HDWI.obs$HDW_95)$tau[1]
+pval_sign.adj[12,5] <- abs(mkTrend(dec_HDWI.obs$HDW_95)$tau[1])/mkTrend(dec_HDWI.obs$HDW_95)$tau[1]
+```
+
+```{r}
+#pvals obs w/ adj
+pvaltab <- pvals_adj 
+
+for (i in 1:12) {
+  for (j in 1:5) {
+    pvaltab[i,j] = ifelse(pvaltab[i,j] == 'NaN', 'FAIL', pvaltab[i,j])
+    pvaltab[i,j] = cell_spec(pvaltab[i,j], "latex", bold = ifelse(pvaltab[i,j] < 0.05 | pvaltab[i,j] == 'FAIL', T, F), italic = ifelse(pvaltab[i,j] < 0.1 & pvaltab[i,j] > 0.05, T, F), color = case_when(pvaltab[i,j] == 'FAIL' ~ 'orange', pvaltab[i,j] > .1 ~ 'black', pvaltab[i,j] < .1 & pval_sign.adj[i,j] == -1 ~ 'blue', pvaltab[i,j] < .1 & pval_sign.adj[i,j] == 1  ~ 'red'))
+  }}
+
+knitr::kable(pvaltab, format="latex", booktabs = T, escape = F, align = 'c', linesep = "")
+```
+
+21 Reanalysis TABLES
+
+```{r results = FALSE}
+pvals_adj <- data.frame(matrix(nrow = 12, ncol = 5), row.names = c('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'))
+colnames(pvals_adj) = c('5th Percentile','25th Percentile','50th Percentile','75th Percentile','95th Percentile')
+
+pval_sign.adj <- data.frame(matrix(nrow = 12, ncol = 5), row.names = c('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'))
+colnames(pval_sign.adj) = c('5th Percentile','25th Percentile','50th Percentile','75th Percentile','95th Percentile')
+```
+
+```{r results = FALSE}
+pvals_adj[1,1] <- round(mkTrend(jan_HDWI.re[63:83,]$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[2,1] <- round(mkTrend(feb_HDWI.re[63:83,]$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[3,1] <- round(mkTrend(mar_HDWI.re[63:83,]$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[4,1] <- round(mkTrend(apr_HDWI.re[63:83,]$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[5,1] <- round(mkTrend(may_HDWI.re[63:83,]$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[6,1] <- round(mkTrend(jun_HDWI.re[63:83,]$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[7,1] <- round(mkTrend(jul_HDWI.re[63:83,]$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[8,1] <- round(mkTrend(aug_HDWI.re[63:83,]$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[9,1] <- round(mkTrend(sep_HDWI.re[63:83,]$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[10,1] <- round(mkTrend(oct_HDWI.re[63:83,]$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[11,1] <- round(mkTrend(nov_HDWI.re[63:83,]$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[12,1] <- round(mkTrend(dec_HDWI.re[63:83,]$HDW_5)$`Corrected p.value`, 3)
+```
+
+```{r results = FALSE}
+pvals_adj[1,2] <- round(mkTrend(jan_HDWI.re[63:83,]$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[2,2] <- round(mkTrend(feb_HDWI.re[63:83,]$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[3,2] <- round(mkTrend(mar_HDWI.re[63:83,]$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[4,2] <- round(mkTrend(apr_HDWI.re[63:83,]$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[5,2] <- round(mkTrend(may_HDWI.re[63:83,]$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[6,2] <- round(mkTrend(jun_HDWI.re[63:83,]$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[7,2] <- round(mkTrend(jul_HDWI.re[63:83,]$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[8,2] <- round(mkTrend(aug_HDWI.re[63:83,]$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[9,2] <- round(mkTrend(sep_HDWI.re[63:83,]$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[10,2] <- round(mkTrend(oct_HDWI.re[63:83,]$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[11,2] <- round(mkTrend(nov_HDWI.re[63:83,]$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[12,2] <- round(mkTrend(dec_HDWI.re[63:83,]$HDW_25)$`Corrected p.value`, 3)
+```
+
+```{r results = FALSE}
+pvals_adj[1,3] <- round(mkTrend(jan_HDWI.re[63:83,]$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[2,3] <- round(mkTrend(feb_HDWI.re[63:83,]$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[3,3] <- round(mkTrend(mar_HDWI.re[63:83,]$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[4,3] <- round(mkTrend(apr_HDWI.re[63:83,]$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[5,3] <- round(mkTrend(may_HDWI.re[63:83,]$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[6,3] <- round(mkTrend(jun_HDWI.re[63:83,]$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[7,3] <- round(mkTrend(jul_HDWI.re[63:83,]$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[8,3] <- round(mkTrend(aug_HDWI.re[63:83,]$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[9,3] <- round(mkTrend(sep_HDWI.re[63:83,]$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[10,3] <- round(mkTrend(oct_HDWI.re[63:83,]$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[11,3] <- round(mkTrend(nov_HDWI.re[63:83,]$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[12,3] <- round(mkTrend(dec_HDWI.re[63:83,]$HDW_50)$`Corrected p.value`, 3)
+```
+
+```{r results = FALSE}
+pvals_adj[1,4] <- round(mkTrend(jan_HDWI.re[63:83,]$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[2,4] <- round(mkTrend(feb_HDWI.re[63:83,]$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[3,4] <- round(mkTrend(mar_HDWI.re[63:83,]$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[4,4] <- round(mkTrend(apr_HDWI.re[63:83,]$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[5,4] <- round(mkTrend(may_HDWI.re[63:83,]$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[6,4] <- round(mkTrend(jun_HDWI.re[63:83,]$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[7,4] <- round(mkTrend(jul_HDWI.re[63:83,]$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[8,4] <- round(mkTrend(aug_HDWI.re[63:83,]$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[9,4] <- round(mkTrend(sep_HDWI.re[63:83,]$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[10,4] <- round(mkTrend(oct_HDWI.re[63:83,]$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[11,4] <- round(mkTrend(nov_HDWI.re[63:83,]$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[12,4] <- round(mkTrend(dec_HDWI.re[63:83,]$HDW_75)$`Corrected p.value`, 3)
+pvals_adj
+```
+
+```{r results = FALSE}
+pvals_adj[1,5] <- round(mkTrend(jan_HDWI.re[63:83,]$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[2,5] <- round(mkTrend(feb_HDWI.re[63:83,]$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[3,5] <- round(mkTrend(mar_HDWI.re[63:83,]$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[4,5] <- round(mkTrend(apr_HDWI.re[63:83,]$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[5,5] <- round(mkTrend(may_HDWI.re[63:83,]$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[6,5] <- round(mkTrend(jun_HDWI.re[63:83,]$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[7,5] <- round(mkTrend(jul_HDWI.re[63:83,]$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[8,5] <- round(mkTrend(aug_HDWI.re[63:83,]$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[9,5] <- round(mkTrend(sep_HDWI.re[63:83,]$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[10,5] <- round(mkTrend(oct_HDWI.re[63:83,]$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[11,5] <- round(mkTrend(nov_HDWI.re[63:83,]$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[12,5] <- round(mkTrend(dec_HDWI.re[63:83,]$HDW_95)$`Corrected p.value`, 3)
+pvals_adj
+```
+
+```{r results = FALSE}
+pval_sign.adj[1,1] <- abs(mkTrend(jan_HDWI.re[63:83,]$HDW_5)$tau[1])/mkTrend(jan_HDWI.re[63:83,]$HDW_5)$tau[1]
+pval_sign.adj[2,1] <- abs(mkTrend(feb_HDWI.re[63:83,]$HDW_5)$tau[1])/mkTrend(feb_HDWI.re[63:83,]$HDW_5)$tau[1]
+pval_sign.adj[3,1] <- abs(mkTrend(mar_HDWI.re[63:83,]$HDW_5)$tau[1])/mkTrend(mar_HDWI.re[63:83,]$HDW_5)$tau[1]
+pval_sign.adj[4,1] <- abs(mkTrend(apr_HDWI.re[63:83,]$HDW_5)$tau[1])/mkTrend(apr_HDWI.re[63:83,]$HDW_5)$tau[1]
+pval_sign.adj[5,1] <- abs(mkTrend(may_HDWI.re[63:83,]$HDW_5)$tau[1])/mkTrend(may_HDWI.re[63:83,]$HDW_5)$tau[1]
+pval_sign.adj[6,1] <- abs(mkTrend(jun_HDWI.re[63:83,]$HDW_5)$tau[1])/mkTrend(jun_HDWI.re[63:83,]$HDW_5)$tau[1]
+pval_sign.adj[7,1] <- abs(mkTrend(jul_HDWI.re[63:83,]$HDW_5)$tau[1])/mkTrend(jul_HDWI.re[63:83,]$HDW_5)$tau[1]
+pval_sign.adj[8,1] <- abs(mkTrend(aug_HDWI.re[63:83,]$HDW_5)$tau[1])/mkTrend(aug_HDWI.re[63:83,]$HDW_5)$tau[1]
+pval_sign.adj[9,1] <- abs(mkTrend(sep_HDWI.re[63:83,]$HDW_5)$tau[1])/mkTrend(sep_HDWI.re[63:83,]$HDW_5)$tau[1]
+pval_sign.adj[10,1] <- abs(mkTrend(oct_HDWI.re[63:83,]$HDW_5)$tau[1])/mkTrend(oct_HDWI.re[63:83,]$HDW_5)$tau[1]
+pval_sign.adj[11,1] <- abs(mkTrend(nov_HDWI.re[63:83,]$HDW_5)$tau[1])/mkTrend(nov_HDWI.re[63:83,]$HDW_5)$tau[1]
+pval_sign.adj[12,1] <- abs(mkTrend(dec_HDWI.re[63:83,]$HDW_5)$tau[1])/mkTrend(dec_HDWI.re[63:83,]$HDW_5)$tau[1]
+```
+
+```{r results = FALSE}
+pval_sign.adj[1,2] <- abs(mkTrend(jan_HDWI.re[63:83,]$HDW_25)$tau[1])/mkTrend(jan_HDWI.re[63:83,]$HDW_25)$tau[1]
+pval_sign.adj[2,2] <- abs(mkTrend(feb_HDWI.re[63:83,]$HDW_25)$tau[1])/mkTrend(feb_HDWI.re[63:83,]$HDW_25)$tau[1]
+pval_sign.adj[3,2] <- abs(mkTrend(mar_HDWI.re[63:83,]$HDW_25)$tau[1])/mkTrend(mar_HDWI.re[63:83,]$HDW_25)$tau[1]
+pval_sign.adj[4,2] <- abs(mkTrend(apr_HDWI.re[63:83,]$HDW_25)$tau[1])/mkTrend(apr_HDWI.re[63:83,]$HDW_25)$tau[1]
+pval_sign.adj[5,2] <- abs(mkTrend(may_HDWI.re[63:83,]$HDW_25)$tau[1])/mkTrend(may_HDWI.re[63:83,]$HDW_25)$tau[1]
+pval_sign.adj[6,2] <- abs(mkTrend(jun_HDWI.re[63:83,]$HDW_25)$tau[1])/mkTrend(jun_HDWI.re[63:83,]$HDW_25)$tau[1]
+pval_sign.adj[7,2] <- abs(mkTrend(jul_HDWI.re[63:83,]$HDW_25)$tau[1])/mkTrend(jul_HDWI.re[63:83,]$HDW_25)$tau[1]
+pval_sign.adj[8,2] <- abs(mkTrend(aug_HDWI.re[63:83,]$HDW_25)$tau[1])/mkTrend(aug_HDWI.re[63:83,]$HDW_25)$tau[1]
+pval_sign.adj[9,2] <- abs(mkTrend(sep_HDWI.re[63:83,]$HDW_25)$tau[1])/mkTrend(sep_HDWI.re[63:83,]$HDW_25)$tau[1]
+pval_sign.adj[10,2] <- abs(mkTrend(oct_HDWI.re[63:83,]$HDW_25)$tau[1])/mkTrend(oct_HDWI.re[63:83,]$HDW_25)$tau[1]
+pval_sign.adj[11,2] <- abs(mkTrend(nov_HDWI.re[63:83,]$HDW_25)$tau[1])/mkTrend(nov_HDWI.re[63:83,]$HDW_25)$tau[1]
+pval_sign.adj[12,2] <- abs(mkTrend(dec_HDWI.re[63:83,]$HDW_25)$tau[1])/mkTrend(dec_HDWI.re[63:83,]$HDW_25)$tau[1]
+```
+
+```{r results = FALSE}
+pval_sign.adj[1,3] <- abs(mkTrend(jan_HDWI.re[63:83,]$HDW_50)$tau[1])/mkTrend(jan_HDWI.re[63:83,]$HDW_50)$tau[1]
+pval_sign.adj[2,3] <- abs(mkTrend(feb_HDWI.re[63:83,]$HDW_50)$tau[1])/mkTrend(feb_HDWI.re[63:83,]$HDW_50)$tau[1]
+pval_sign.adj[3,3] <- abs(mkTrend(mar_HDWI.re[63:83,]$HDW_50)$tau[1])/mkTrend(mar_HDWI.re[63:83,]$HDW_50)$tau[1]
+pval_sign.adj[4,3] <- abs(mkTrend(apr_HDWI.re[63:83,]$HDW_50)$tau[1])/mkTrend(apr_HDWI.re[63:83,]$HDW_50)$tau[1]
+pval_sign.adj[5,3] <- abs(mkTrend(may_HDWI.re[63:83,]$HDW_50)$tau[1])/mkTrend(may_HDWI.re[63:83,]$HDW_50)$tau[1]
+pval_sign.adj[6,3] <- abs(mkTrend(jun_HDWI.re[63:83,]$HDW_50)$tau[1])/mkTrend(jun_HDWI.re[63:83,]$HDW_50)$tau[1]
+pval_sign.adj[7,3] <- abs(mkTrend(jul_HDWI.re[63:83,]$HDW_50)$tau[1])/mkTrend(jul_HDWI.re[63:83,]$HDW_50)$tau[1]
+pval_sign.adj[8,3] <- abs(mkTrend(aug_HDWI.re[63:83,]$HDW_50)$tau[1])/mkTrend(aug_HDWI.re[63:83,]$HDW_50)$tau[1]
+pval_sign.adj[9,3] <- abs(mkTrend(sep_HDWI.re[63:83,]$HDW_50)$tau[1])/mkTrend(sep_HDWI.re[63:83,]$HDW_50)$tau[1]
+pval_sign.adj[10,3] <- abs(mkTrend(oct_HDWI.re[63:83,]$HDW_50)$tau[1])/mkTrend(oct_HDWI.re[63:83,]$HDW_50)$tau[1]
+pval_sign.adj[11,3] <- abs(mkTrend(nov_HDWI.re[63:83,]$HDW_50)$tau[1])/mkTrend(nov_HDWI.re[63:83,]$HDW_50)$tau[1]
+pval_sign.adj[12,3] <- abs(mkTrend(dec_HDWI.re[63:83,]$HDW_50)$tau[1])/mkTrend(dec_HDWI.re[63:83,]$HDW_50)$tau[1]
+```
+
+```{r results = FALSE}
+pval_sign.adj[1,4] <- abs(mkTrend(jan_HDWI.re[63:83,]$HDW_75)$tau[1])/mkTrend(jan_HDWI.re[63:83,]$HDW_75)$tau[1]
+pval_sign.adj[2,4] <- abs(mkTrend(feb_HDWI.re[63:83,]$HDW_75)$tau[1])/mkTrend(feb_HDWI.re[63:83,]$HDW_75)$tau[1]
+pval_sign.adj[3,4] <- abs(mkTrend(mar_HDWI.re[63:83,]$HDW_75)$tau[1])/mkTrend(mar_HDWI.re[63:83,]$HDW_75)$tau[1]
+pval_sign.adj[4,4] <- abs(mkTrend(apr_HDWI.re[63:83,]$HDW_75)$tau[1])/mkTrend(apr_HDWI.re[63:83,]$HDW_75)$tau[1]
+pval_sign.adj[5,4] <- abs(mkTrend(may_HDWI.re[63:83,]$HDW_75)$tau[1])/mkTrend(may_HDWI.re[63:83,]$HDW_75)$tau[1]
+pval_sign.adj[6,4] <- abs(mkTrend(jun_HDWI.re[63:83,]$HDW_75)$tau[1])/mkTrend(jun_HDWI.re[63:83,]$HDW_75)$tau[1]
+pval_sign.adj[7,4] <- abs(mkTrend(jul_HDWI.re[63:83,]$HDW_75)$tau[1])/mkTrend(jul_HDWI.re[63:83,]$HDW_75)$tau[1]
+pval_sign.adj[8,4] <- abs(mkTrend(aug_HDWI.re[63:83,]$HDW_75)$tau[1])/mkTrend(aug_HDWI.re[63:83,]$HDW_75)$tau[1]
+pval_sign.adj[9,4] <- abs(mkTrend(sep_HDWI.re[63:83,]$HDW_75)$tau[1])/mkTrend(sep_HDWI.re[63:83,]$HDW_75)$tau[1]
+pval_sign.adj[10,4] <- abs(mkTrend(oct_HDWI.re[63:83,]$HDW_75)$tau[1])/mkTrend(oct_HDWI.re[63:83,]$HDW_75)$tau[1]
+pval_sign.adj[11,4] <- abs(mkTrend(nov_HDWI.re[63:83,]$HDW_75)$tau[1])/mkTrend(nov_HDWI.re[63:83,]$HDW_75)$tau[1]
+pval_sign.adj[12,4] <- abs(mkTrend(dec_HDWI.re[63:83,]$HDW_75)$tau[1])/mkTrend(dec_HDWI.re[63:83,]$HDW_75)$tau[1]
+```
+
+```{r}
+pval_sign.adj[1,5] <- abs(mkTrend(jan_HDWI.re[63:83,]$HDW_95)$tau[1])/mkTrend(jan_HDWI.re[63:83,]$HDW_95)$tau[1]
+pval_sign.adj[2,5] <- abs(mkTrend(feb_HDWI.re[63:83,]$HDW_95)$tau[1])/mkTrend(feb_HDWI.re[63:83,]$HDW_95)$tau[1]
+pval_sign.adj[3,5] <- abs(mkTrend(mar_HDWI.re[63:83,]$HDW_95)$tau[1])/mkTrend(mar_HDWI.re[63:83,]$HDW_95)$tau[1]
+pval_sign.adj[4,5] <- abs(mkTrend(apr_HDWI.re[63:83,]$HDW_95)$tau[1])/mkTrend(apr_HDWI.re[63:83,]$HDW_95)$tau[1]
+pval_sign.adj[5,5] <- abs(mkTrend(may_HDWI.re[63:83,]$HDW_95)$tau[1])/mkTrend(may_HDWI.re[63:83,]$HDW_95)$tau[1]
+pval_sign.adj[6,5] <- abs(mkTrend(jun_HDWI.re[63:83,]$HDW_95)$tau[1])/mkTrend(jun_HDWI.re[63:83,]$HDW_95)$tau[1]
+pval_sign.adj[7,5] <- abs(mkTrend(jul_HDWI.re[63:83,]$HDW_95)$tau[1])/mkTrend(jul_HDWI.re[63:83,]$HDW_95)$tau[1]
+pval_sign.adj[8,5] <- abs(mkTrend(aug_HDWI.re[63:83,]$HDW_95)$tau[1])/mkTrend(aug_HDWI.re[63:83,]$HDW_95)$tau[1]
+pval_sign.adj[9,5] <- abs(mkTrend(sep_HDWI.re[63:83,]$HDW_95)$tau[1])/mkTrend(sep_HDWI.re[63:83,]$HDW_95)$tau[1]
+pval_sign.adj[10,5] <- abs(mkTrend(oct_HDWI.re[63:83,]$HDW_95)$tau[1])/mkTrend(oct_HDWI.re[63:83,]$HDW_95)$tau[1]
+pval_sign.adj[11,5] <- abs(mkTrend(nov_HDWI.re[63:83,]$HDW_95)$tau[1])/mkTrend(nov_HDWI.re[63:83,]$HDW_95)$tau[1]
+pval_sign.adj[12,5] <- abs(mkTrend(dec_HDWI.re[63:83,]$HDW_95)$tau[1])/mkTrend(dec_HDWI.re[63:83,]$HDW_95)$tau[1]
+```
+
+```{r}
+#pvals re21 w/ adj
+pvaltab <- pvals_adj 
+
+for (i in 1:12) {
+  for (j in 1:5) {
+    pvaltab[i,j] = ifelse(pvaltab[i,j] == 'NaN', 'FAIL', pvaltab[i,j])
+    pvaltab[i,j] = cell_spec(pvaltab[i,j], "latex", bold = ifelse(pvaltab[i,j] < 0.05 | pvaltab[i,j] == 'FAIL', T, F), italic = ifelse(pvaltab[i,j] < 0.1 & pvaltab[i,j] > 0.05, T, F), color = case_when(pvaltab[i,j] == 'FAIL' ~ 'orange', pvaltab[i,j] > .1 ~ 'black', pvaltab[i,j] < .1 & pval_sign.adj[i,j] == -1 ~ 'blue', pvaltab[i,j] < .1 & pval_sign.adj[i,j] == 1  ~ 'red'))
+  }}
+
+knitr::kable(pvaltab, format="latex", booktabs = T, escape = F, align = 'c', linesep = "")
+```
+
+83 Reanalysis TABLES
+
+```{r results = FALSE}
+pvals_adj <- data.frame(matrix(nrow = 12, ncol = 5), row.names = c('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'))
+colnames(pvals_adj) = c('5th Percentile','25th Percentile','50th Percentile','75th Percentile','95th Percentile')
+
+pval_sign.adj <- data.frame(matrix(nrow = 12, ncol = 5), row.names = c('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'))
+colnames(pval_sign.adj) = c('5th Percentile','25th Percentile','50th Percentile','75th Percentile','95th Percentile')
+```
+
+```{r results = FALSE}
+pvals_adj[1,1] <- round(mkTrend(jan_HDWI.re$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[2,1] <- round(mkTrend(feb_HDWI.re$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[3,1] <- round(mkTrend(mar_HDWI.re$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[4,1] <- round(mkTrend(apr_HDWI.re$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[5,1] <- round(mkTrend(may_HDWI.re$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[6,1] <- round(mkTrend(jun_HDWI.re$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[7,1] <- round(mkTrend(jul_HDWI.re$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[8,1] <- round(mkTrend(aug_HDWI.re$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[9,1] <- round(mkTrend(sep_HDWI.re$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[10,1] <- round(mkTrend(oct_HDWI.re$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[11,1] <- round(mkTrend(nov_HDWI.re$HDW_5)$`Corrected p.value`, 3)
+pvals_adj[12,1] <- round(mkTrend(dec_HDWI.re$HDW_5)$`Corrected p.value`, 3)
+```
+
+```{r results = FALSE}
+pvals_adj[1,2] <- round(mkTrend(jan_HDWI.re$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[2,2] <- round(mkTrend(feb_HDWI.re$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[3,2] <- round(mkTrend(mar_HDWI.re$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[4,2] <- round(mkTrend(apr_HDWI.re$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[5,2] <- round(mkTrend(may_HDWI.re$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[6,2] <- round(mkTrend(jun_HDWI.re$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[7,2] <- round(mkTrend(jul_HDWI.re$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[8,2] <- round(mkTrend(aug_HDWI.re$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[9,2] <- round(mkTrend(sep_HDWI.re$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[10,2] <- round(mkTrend(oct_HDWI.re$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[11,2] <- round(mkTrend(nov_HDWI.re$HDW_25)$`Corrected p.value`, 3)
+pvals_adj[12,2] <- round(mkTrend(dec_HDWI.re$HDW_25)$`Corrected p.value`, 3)
+```
+
+```{r results = FALSE}
+pvals_adj[1,3] <- round(mkTrend(jan_HDWI.re$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[2,3] <- round(mkTrend(feb_HDWI.re$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[3,3] <- round(mkTrend(mar_HDWI.re$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[4,3] <- round(mkTrend(apr_HDWI.re$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[5,3] <- round(mkTrend(may_HDWI.re$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[6,3] <- round(mkTrend(jun_HDWI.re$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[7,3] <- round(mkTrend(jul_HDWI.re$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[8,3] <- round(mkTrend(aug_HDWI.re$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[9,3] <- round(mkTrend(sep_HDWI.re$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[10,3] <- round(mkTrend(oct_HDWI.re$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[11,3] <- round(mkTrend(nov_HDWI.re$HDW_50)$`Corrected p.value`, 3)
+pvals_adj[12,3] <- round(mkTrend(dec_HDWI.re$HDW_50)$`Corrected p.value`, 3)
+```
+
+```{r results = FALSE}
+pvals_adj[1,4] <- round(mkTrend(jan_HDWI.re$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[2,4] <- round(mkTrend(feb_HDWI.re$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[3,4] <- round(mkTrend(mar_HDWI.re$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[4,4] <- round(mkTrend(apr_HDWI.re$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[5,4] <- round(mkTrend(may_HDWI.re$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[6,4] <- round(mkTrend(jun_HDWI.re$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[7,4] <- round(mkTrend(jul_HDWI.re$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[8,4] <- round(mkTrend(aug_HDWI.re$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[9,4] <- round(mkTrend(sep_HDWI.re$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[10,4] <- round(mkTrend(oct_HDWI.re$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[11,4] <- round(mkTrend(nov_HDWI.re$HDW_75)$`Corrected p.value`, 3)
+pvals_adj[12,4] <- round(mkTrend(dec_HDWI.re$HDW_75)$`Corrected p.value`, 3)
+pvals_adj
+```
+
+```{r results = FALSE}
+pvals_adj[1,5] <- round(mkTrend(jan_HDWI.re$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[2,5] <- round(mkTrend(feb_HDWI.re$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[3,5] <- round(mkTrend(mar_HDWI.re$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[4,5] <- round(mkTrend(apr_HDWI.re$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[5,5] <- round(mkTrend(may_HDWI.re$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[6,5] <- round(mkTrend(jun_HDWI.re$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[7,5] <- round(mkTrend(jul_HDWI.re$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[8,5] <- round(mkTrend(aug_HDWI.re$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[9,5] <- round(mkTrend(sep_HDWI.re$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[10,5] <- round(mkTrend(oct_HDWI.re$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[11,5] <- round(mkTrend(nov_HDWI.re$HDW_95)$`Corrected p.value`, 3)
+pvals_adj[12,5] <- round(mkTrend(dec_HDWI.re$HDW_95)$`Corrected p.value`, 3)
+pvals_adj
+```
+
+```{r results = FALSE}
+pval_sign.adj[1,1] <- abs(mkTrend(jan_HDWI.re$HDW_5)$tau[1])/mkTrend(jan_HDWI.re$HDW_5)$tau[1]
+pval_sign.adj[2,1] <- abs(mkTrend(feb_HDWI.re$HDW_5)$tau[1])/mkTrend(feb_HDWI.re$HDW_5)$tau[1]
+pval_sign.adj[3,1] <- abs(mkTrend(mar_HDWI.re$HDW_5)$tau[1])/mkTrend(mar_HDWI.re$HDW_5)$tau[1]
+pval_sign.adj[4,1] <- abs(mkTrend(apr_HDWI.re$HDW_5)$tau[1])/mkTrend(apr_HDWI.re$HDW_5)$tau[1]
+pval_sign.adj[5,1] <- abs(mkTrend(may_HDWI.re$HDW_5)$tau[1])/mkTrend(may_HDWI.re$HDW_5)$tau[1]
+pval_sign.adj[6,1] <- abs(mkTrend(jun_HDWI.re$HDW_5)$tau[1])/mkTrend(jun_HDWI.re$HDW_5)$tau[1]
+pval_sign.adj[7,1] <- abs(mkTrend(jul_HDWI.re$HDW_5)$tau[1])/mkTrend(jul_HDWI.re$HDW_5)$tau[1]
+pval_sign.adj[8,1] <- abs(mkTrend(aug_HDWI.re$HDW_5)$tau[1])/mkTrend(aug_HDWI.re$HDW_5)$tau[1]
+pval_sign.adj[9,1] <- abs(mkTrend(sep_HDWI.re$HDW_5)$tau[1])/mkTrend(sep_HDWI.re$HDW_5)$tau[1]
+pval_sign.adj[10,1] <- abs(mkTrend(oct_HDWI.re$HDW_5)$tau[1])/mkTrend(oct_HDWI.re$HDW_5)$tau[1]
+pval_sign.adj[11,1] <- abs(mkTrend(nov_HDWI.re$HDW_5)$tau[1])/mkTrend(nov_HDWI.re$HDW_5)$tau[1]
+pval_sign.adj[12,1] <- abs(mkTrend(dec_HDWI.re$HDW_5)$tau[1])/mkTrend(dec_HDWI.re$HDW_5)$tau[1]
+```
+
+```{r results = FALSE}
+pval_sign.adj[1,2] <- abs(mkTrend(jan_HDWI.re$HDW_25)$tau[1])/mkTrend(jan_HDWI.re$HDW_25)$tau[1]
+pval_sign.adj[2,2] <- abs(mkTrend(feb_HDWI.re$HDW_25)$tau[1])/mkTrend(feb_HDWI.re$HDW_25)$tau[1]
+pval_sign.adj[3,2] <- abs(mkTrend(mar_HDWI.re$HDW_25)$tau[1])/mkTrend(mar_HDWI.re$HDW_25)$tau[1]
+pval_sign.adj[4,2] <- abs(mkTrend(apr_HDWI.re$HDW_25)$tau[1])/mkTrend(apr_HDWI.re$HDW_25)$tau[1]
+pval_sign.adj[5,2] <- abs(mkTrend(may_HDWI.re$HDW_25)$tau[1])/mkTrend(may_HDWI.re$HDW_25)$tau[1]
+pval_sign.adj[6,2] <- abs(mkTrend(jun_HDWI.re$HDW_25)$tau[1])/mkTrend(jun_HDWI.re$HDW_25)$tau[1]
+pval_sign.adj[7,2] <- abs(mkTrend(jul_HDWI.re$HDW_25)$tau[1])/mkTrend(jul_HDWI.re$HDW_25)$tau[1]
+pval_sign.adj[8,2] <- abs(mkTrend(aug_HDWI.re$HDW_25)$tau[1])/mkTrend(aug_HDWI.re$HDW_25)$tau[1]
+pval_sign.adj[9,2] <- abs(mkTrend(sep_HDWI.re$HDW_25)$tau[1])/mkTrend(sep_HDWI.re$HDW_25)$tau[1]
+pval_sign.adj[10,2] <- abs(mkTrend(oct_HDWI.re$HDW_25)$tau[1])/mkTrend(oct_HDWI.re$HDW_25)$tau[1]
+pval_sign.adj[11,2] <- abs(mkTrend(nov_HDWI.re$HDW_25)$tau[1])/mkTrend(nov_HDWI.re$HDW_25)$tau[1]
+pval_sign.adj[12,2] <- abs(mkTrend(dec_HDWI.re$HDW_25)$tau[1])/mkTrend(dec_HDWI.re$HDW_25)$tau[1]
+```
+
+```{r results = FALSE}
+pval_sign.adj[1,3] <- abs(mkTrend(jan_HDWI.re$HDW_50)$tau[1])/mkTrend(jan_HDWI.re$HDW_50)$tau[1]
+pval_sign.adj[2,3] <- abs(mkTrend(feb_HDWI.re$HDW_50)$tau[1])/mkTrend(feb_HDWI.re$HDW_50)$tau[1]
+pval_sign.adj[3,3] <- abs(mkTrend(mar_HDWI.re$HDW_50)$tau[1])/mkTrend(mar_HDWI.re$HDW_50)$tau[1]
+pval_sign.adj[4,3] <- abs(mkTrend(apr_HDWI.re$HDW_50)$tau[1])/mkTrend(apr_HDWI.re$HDW_50)$tau[1]
+pval_sign.adj[5,3] <- abs(mkTrend(may_HDWI.re$HDW_50)$tau[1])/mkTrend(may_HDWI.re$HDW_50)$tau[1]
+pval_sign.adj[6,3] <- abs(mkTrend(jun_HDWI.re$HDW_50)$tau[1])/mkTrend(jun_HDWI.re$HDW_50)$tau[1]
+pval_sign.adj[7,3] <- abs(mkTrend(jul_HDWI.re$HDW_50)$tau[1])/mkTrend(jul_HDWI.re$HDW_50)$tau[1]
+pval_sign.adj[8,3] <- abs(mkTrend(aug_HDWI.re$HDW_50)$tau[1])/mkTrend(aug_HDWI.re$HDW_50)$tau[1]
+pval_sign.adj[9,3] <- abs(mkTrend(sep_HDWI.re$HDW_50)$tau[1])/mkTrend(sep_HDWI.re$HDW_50)$tau[1]
+pval_sign.adj[10,3] <- abs(mkTrend(oct_HDWI.re$HDW_50)$tau[1])/mkTrend(oct_HDWI.re$HDW_50)$tau[1]
+pval_sign.adj[11,3] <- abs(mkTrend(nov_HDWI.re$HDW_50)$tau[1])/mkTrend(nov_HDWI.re$HDW_50)$tau[1]
+pval_sign.adj[12,3] <- abs(mkTrend(dec_HDWI.re$HDW_50)$tau[1])/mkTrend(dec_HDWI.re$HDW_50)$tau[1]
+```
+
+```{r results = FALSE}
+pval_sign.adj[1,4] <- abs(mkTrend(jan_HDWI.re$HDW_75)$tau[1])/mkTrend(jan_HDWI.re$HDW_75)$tau[1]
+pval_sign.adj[2,4] <- abs(mkTrend(feb_HDWI.re$HDW_75)$tau[1])/mkTrend(feb_HDWI.re$HDW_75)$tau[1]
+pval_sign.adj[3,4] <- abs(mkTrend(mar_HDWI.re$HDW_75)$tau[1])/mkTrend(mar_HDWI.re$HDW_75)$tau[1]
+pval_sign.adj[4,4] <- abs(mkTrend(apr_HDWI.re$HDW_75)$tau[1])/mkTrend(apr_HDWI.re$HDW_75)$tau[1]
+pval_sign.adj[5,4] <- abs(mkTrend(may_HDWI.re$HDW_75)$tau[1])/mkTrend(may_HDWI.re$HDW_75)$tau[1]
+pval_sign.adj[6,4] <- abs(mkTrend(jun_HDWI.re$HDW_75)$tau[1])/mkTrend(jun_HDWI.re$HDW_75)$tau[1]
+pval_sign.adj[7,4] <- abs(mkTrend(jul_HDWI.re$HDW_75)$tau[1])/mkTrend(jul_HDWI.re$HDW_75)$tau[1]
+pval_sign.adj[8,4] <- abs(mkTrend(aug_HDWI.re$HDW_75)$tau[1])/mkTrend(aug_HDWI.re$HDW_75)$tau[1]
+pval_sign.adj[9,4] <- abs(mkTrend(sep_HDWI.re$HDW_75)$tau[1])/mkTrend(sep_HDWI.re$HDW_75)$tau[1]
+pval_sign.adj[10,4] <- abs(mkTrend(oct_HDWI.re$HDW_75)$tau[1])/mkTrend(oct_HDWI.re$HDW_75)$tau[1]
+pval_sign.adj[11,4] <- abs(mkTrend(nov_HDWI.re$HDW_75)$tau[1])/mkTrend(nov_HDWI.re$HDW_75)$tau[1]
+pval_sign.adj[12,4] <- abs(mkTrend(dec_HDWI.re$HDW_75)$tau[1])/mkTrend(dec_HDWI.re$HDW_75)$tau[1]
+```
+
+```{r}
+pval_sign.adj[1,5] <- abs(mkTrend(jan_HDWI.re$HDW_95)$tau[1])/mkTrend(jan_HDWI.re$HDW_95)$tau[1]
+pval_sign.adj[2,5] <- abs(mkTrend(feb_HDWI.re$HDW_95)$tau[1])/mkTrend(feb_HDWI.re$HDW_95)$tau[1]
+pval_sign.adj[3,5] <- abs(mkTrend(mar_HDWI.re$HDW_95)$tau[1])/mkTrend(mar_HDWI.re$HDW_95)$tau[1]
+pval_sign.adj[4,5] <- abs(mkTrend(apr_HDWI.re$HDW_95)$tau[1])/mkTrend(apr_HDWI.re$HDW_95)$tau[1]
+pval_sign.adj[5,5] <- abs(mkTrend(may_HDWI.re$HDW_95)$tau[1])/mkTrend(may_HDWI.re$HDW_95)$tau[1]
+pval_sign.adj[6,5] <- abs(mkTrend(jun_HDWI.re$HDW_95)$tau[1])/mkTrend(jun_HDWI.re$HDW_95)$tau[1]
+pval_sign.adj[7,5] <- abs(mkTrend(jul_HDWI.re$HDW_95)$tau[1])/mkTrend(jul_HDWI.re$HDW_95)$tau[1]
+pval_sign.adj[8,5] <- abs(mkTrend(aug_HDWI.re$HDW_95)$tau[1])/mkTrend(aug_HDWI.re$HDW_95)$tau[1]
+pval_sign.adj[9,5] <- abs(mkTrend(sep_HDWI.re$HDW_95)$tau[1])/mkTrend(sep_HDWI.re$HDW_95)$tau[1]
+pval_sign.adj[10,5] <- abs(mkTrend(oct_HDWI.re$HDW_95)$tau[1])/mkTrend(oct_HDWI.re$HDW_95)$tau[1]
+pval_sign.adj[11,5] <- abs(mkTrend(nov_HDWI.re$HDW_95)$tau[1])/mkTrend(nov_HDWI.re$HDW_95)$tau[1]
+pval_sign.adj[12,5] <- abs(mkTrend(dec_HDWI.re$HDW_95)$tau[1])/mkTrend(dec_HDWI.re$HDW_95)$tau[1]
+```
+
+```{r}
+#pvals re83 w/ adj
+pvaltab <- pvals_adj 
+
+for (i in 1:12) {
+  for (j in 1:5) {
+    pvaltab[i,j] = ifelse(pvaltab[i,j] == 'NaN', 'FAIL', pvaltab[i,j])
+    pvaltab[i,j] = cell_spec(pvaltab[i,j], "latex", bold = ifelse(pvaltab[i,j] < 0.05 | pvaltab[i,j] == 'FAIL', T, F), italic = ifelse(pvaltab[i,j] < 0.1 & pvaltab[i,j] > 0.05, T, F), color = case_when(pvaltab[i,j] == 'FAIL' ~ 'orange', pvaltab[i,j] > .1 ~ 'black', pvaltab[i,j] < .1 & pval_sign.adj[i,j] == -1 ~ 'blue', pvaltab[i,j] < .1 & pval_sign.adj[i,j] == 1  ~ 'red'))
+  }}
+
+knitr::kable(pvaltab, format="latex", booktabs = T, escape = F, align = 'c', linesep = "")
+```
