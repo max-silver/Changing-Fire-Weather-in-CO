@@ -1,0 +1,613 @@
+```{r}
+library(reshape2)
+library(ggplot2)
+library(dplyr)
+library('ncdf4')
+library(Kendall)
+library(fume)
+```
+
+```{r}
+nc_data <- nc_open('geo_emd01.nc') #elevation map of colorado file
+lon <- ncvar_get(nc_data, "XLONG_M") #all longitude values
+lat <- ncvar_get(nc_data, "XLAT_M") #all latitude values
+elev <- ncvar_get(nc_data, "HGT_M")
+df.elev <- data.frame(cbind(c(lon), c(lat), c(elev)))
+colnames(df.elev) <- c('lon', 'lat', 'elev')
+```
+
+```{r}
+df2 <- df.elev %>%
+  filter(lon >= -109 & lon <= -102) %>%
+  filter(lat >= 37 & lat <= 41)
+```
+
+```{r}
+data1 <- load('CO95HDWI.RData')
+```
+
+```{r}
+CO_jan.pvals <- array(-1, dim = c(17,29, 2), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25)))
+CO_feb.pvals <- array(-1, dim = c(17,29, 2), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25)))
+CO_mar.pvals <- array(-1, dim = c(17,29, 2), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25)))
+CO_apr.pvals <- array(-1, dim = c(17,29, 2), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25)))
+CO_may.pvals <- array(-1, dim = c(17,29, 2), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25)))
+CO_jun.pvals <- array(-1, dim = c(17,29, 2), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25)))
+CO_jul.pvals <- array(-1, dim = c(17,29, 2), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25)))
+CO_aug.pvals <- array(-1, dim = c(17,29, 2), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25)))
+CO_sep.pvals <- array(-1, dim = c(17,29, 2), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25)))
+CO_oct.pvals <- array(-1, dim = c(17,29, 2), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25)))
+CO_nov.pvals <- array(-1, dim = c(17,29, 2), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25)))
+CO_dec.pvals <- array(-1, dim = c(17,29, 2), dimnames = list(seq(41, 37, -0.25), seq(-109, -102, 0.25)))
+```
+
+January
+
+```{r}
+for (i in 1:17){
+  for (j in 1:29) {
+    ts1 <- data.frame(matrix(nrow = 83, ncol = 2))
+    colnames(ts1) = c('HDWI95', 'Year')
+    ts1$HDWI95 = CO_jan[i,j,]
+    ts1$Year = 1940:2022
+    CO_jan.pvals[i,j,1] = round(fume::mkTrend(ts1$HDWI95)$`Corrected p.value`, 4)
+    CO_jan.pvals[i,j,2] = ifelse(fume::mkTrend(ts1$HDWI95)$tau == 0, 1, fume::mkTrend(ts1$HDWI95)$tau/abs(fume::mkTrend(ts1$HDWI95)$tau))
+  }}
+```
+
+February
+
+```{r}
+for (i in 1:17){
+  for (j in 1:29) {
+    ts1 <- data.frame(matrix(nrow = 83, ncol = 2))
+    colnames(ts1) = c('HDWI95', 'Year')
+    ts1$HDWI95 = CO_feb[i,j,]
+    ts1$Year = 1940:2022
+    CO_feb.pvals[i,j, 1] = round(fume::mkTrend(ts1$HDWI95)$`Corrected p.value`, 4)
+    CO_feb.pvals[i,j,2] = ifelse(fume::mkTrend(ts1$HDWI95)$tau == 0, 1, fume::mkTrend(ts1$HDWI95)$tau/abs(fume::mkTrend(ts1$HDWI95)$tau))
+  }}
+```
+
+March
+
+```{r}
+for (i in 1:17){
+  for (j in 1:29) {
+    ts1 <- data.frame(matrix(nrow = 83, ncol = 2))
+    colnames(ts1) = c('HDWI95', 'Year')
+    ts1$HDWI95 = CO_mar[i,j,]
+    ts1$Year = 1940:2022
+    CO_mar.pvals[i,j,1] = round(fume::mkTrend(ts1$HDWI95)$`Corrected p.value`, 4)
+    CO_mar.pvals[i,j,2] = ifelse(fume::mkTrend(ts1$HDWI95)$tau == 0, 1, fume::mkTrend(ts1$HDWI95)$tau/abs(fume::mkTrend(ts1$HDWI95)$tau))
+  }}
+```
+
+April
+
+```{r}
+for (i in 1:17){
+  for (j in 1:29) {
+    ts1 <- data.frame(matrix(nrow = 83, ncol = 2))
+    colnames(ts1) = c('HDWI95', 'Year')
+    ts1$HDWI95 = CO_apr[i,j,]
+    ts1$Year = 1940:2022
+    CO_apr.pvals[i,j,1] = round(fume::mkTrend(ts1$HDWI95)$`Corrected p.value`, 4)
+    CO_apr.pvals[i,j,2] = ifelse(fume::mkTrend(ts1$HDWI95)$tau == 0, 1, fume::mkTrend(ts1$HDWI95)$tau/abs(fume::mkTrend(ts1$HDWI95)$tau))
+  }}
+```
+
+May
+
+```{r}
+for (i in 1:17){
+  for (j in 1:29) {
+    ts1 <- data.frame(matrix(nrow = 83, ncol = 2))
+    colnames(ts1) = c('HDWI95', 'Year')
+    ts1$HDWI95 = CO_may[i,j,]
+    ts1$Year = 1940:2022
+    CO_may.pvals[i,j,1] = round(fume::mkTrend(ts1$HDWI95)$`Corrected p.value`, 4)
+    CO_may.pvals[i,j,2] = ifelse(fume::mkTrend(ts1$HDWI95)$tau == 0, 1, fume::mkTrend(ts1$HDWI95)$tau/abs(fume::mkTrend(ts1$HDWI95)$tau))
+  }}
+```
+
+June
+
+```{r}
+for (i in 1:17){
+  for (j in 1:29) {
+    ts1 <- data.frame(matrix(nrow = 83, ncol = 2))
+    colnames(ts1) = c('HDWI95', 'Year')
+    ts1$HDWI95 = CO_jun[i,j,]
+    ts1$Year = 1940:2022
+    CO_jun.pvals[i,j,1] = round(fume::mkTrend(ts1$HDWI95)$`Corrected p.value`, 4)
+    CO_jun.pvals[i,j,2] = ifelse(fume::mkTrend(ts1$HDWI95)$tau == 0, 1, fume::mkTrend(ts1$HDWI95)$tau/abs(fume::mkTrend(ts1$HDWI95)$tau))
+  }}
+```
+
+July
+
+```{r}
+for (i in 1:17){
+  for (j in 1:29) {
+    ts1 <- data.frame(matrix(nrow = 83, ncol = 2))
+    colnames(ts1) = c('HDWI95', 'Year')
+    ts1$HDWI95 = CO_jul[i,j,]
+    ts1$Year = 1940:2022
+    CO_jul.pvals[i,j,1] = round(fume::mkTrend(ts1$HDWI95)$`Corrected p.value`, 4)
+    CO_jul.pvals[i,j,2] = ifelse(fume::mkTrend(ts1$HDWI95)$tau == 0, 1, fume::mkTrend(ts1$HDWI95)$tau/abs(fume::mkTrend(ts1$HDWI95)$tau))
+  }}
+```
+
+August
+
+```{r}
+for (i in 1:17){
+  for (j in 1:29) {
+    ts1 <- data.frame(matrix(nrow = 83, ncol = 2))
+    colnames(ts1) = c('HDWI95', 'Year')
+    ts1$HDWI95 = CO_aug[i,j,]
+    ts1$Year = 1940:2022
+    CO_aug.pvals[i,j,1] = round(fume::mkTrend(ts1$HDWI95)$`Corrected p.value`, 5)
+    CO_aug.pvals[i,j,2] = ifelse(fume::mkTrend(ts1$HDWI95)$tau == 0, 1, fume::mkTrend(ts1$HDWI95)$tau/abs(fume::mkTrend(ts1$HDWI95)$tau))
+  }}
+```
+
+September
+
+```{r}
+for (i in 1:17){
+  for (j in 1:29) {
+    ts1 <- data.frame(matrix(nrow = 83, ncol = 2))
+    colnames(ts1) = c('HDWI95', 'Year')
+    ts1$HDWI95 = CO_sep[i,j,]
+    ts1$Year = 1940:2022
+    CO_sep.pvals[i,j,1] = round(fume::mkTrend(ts1$HDWI95)$`Corrected p.value`, 4)
+    CO_sep.pvals[i,j,2] = ifelse(fume::mkTrend(ts1$HDWI95)$tau == 0, 1, fume::mkTrend(ts1$HDWI95)$tau/abs(fume::mkTrend(ts1$HDWI95)$tau))
+  }}
+```
+
+October
+
+```{r}
+for (i in 1:17){
+  for (j in 1:29) {
+    ts1 <- data.frame(matrix(nrow = 83, ncol = 2))
+    colnames(ts1) = c('HDWI95', 'Year')
+    ts1$HDWI95 = CO_oct[i,j,]
+    ts1$Year = 1940:2022
+    CO_oct.pvals[i,j,1] = round(fume::mkTrend(ts1$HDWI95)$`Corrected p.value`, 4)
+    CO_oct.pvals[i,j,2] = ifelse(fume::mkTrend(ts1$HDWI95)$tau == 0, 1, fume::mkTrend(ts1$HDWI95)$tau/abs(fume::mkTrend(ts1$HDWI95)$tau))
+  }}
+```
+
+November
+
+```{r}
+for (i in 1:17){
+  for (j in 1:29) {
+    ts1 <- data.frame(matrix(nrow = 83, ncol = 2))
+    colnames(ts1) = c('HDWI95', 'Year')
+    ts1$HDWI95 = CO_nov[i,j,]
+    ts1$Year = 1940:2022
+    CO_nov.pvals[i,j,1] = round(fume::mkTrend(ts1$HDWI95)$`Corrected p.value`, 4)
+    CO_nov.pvals[i,j,2] = ifelse(fume::mkTrend(ts1$HDWI95)$tau == 0, 1, fume::mkTrend(ts1$HDWI95)$tau/abs(fume::mkTrend(ts1$HDWI95)$tau))
+  }}
+```
+
+December
+
+```{r}
+for (i in 1:17){
+  for (j in 1:29) {
+    ts1 <- data.frame(matrix(nrow = 83, ncol = 2))
+    colnames(ts1) = c('HDWI95', 'Year')
+    ts1$HDWI95 = CO_dec[i,j,]
+    ts1$Year = 1940:2022
+    CO_dec.pvals[i,j,1] = round(fume::mkTrend(ts1$HDWI95)$`Corrected p.value`, 5)
+    CO_dec.pvals[i,j,2] = ifelse(fume::mkTrend(ts1$HDWI95)$tau == 0, 1, fume::mkTrend(ts1$HDWI95)$tau/abs(fume::mkTrend(ts1$HDWI95)$tau))
+  }}
+```
+
+January
+
+```{r}
+pval.tab <- data.frame(CO_jan.pvals[,,1])
+pval.tab$lat = seq(41, 37, -.25)
+
+sign.tab <- data.frame(CO_jan.pvals[,,2])
+sign.tab$lat = seq(41, 37, -.25)
+
+df_jan.p <- reshape2::melt(pval.tab, id.var='lat')
+sign.melt <- reshape2::melt(sign.tab, id.var='lat')
+
+df_jan.p$lon <- -1*as.numeric(sub('..', '', as.character(df_jan.p$variable)))
+
+jan_p.graph<-cbind(df_jan.p, direction = sign.melt[,3]) %>%
+  mutate(graph = case_when(value > 0.1 & direction == 1 ~ 'Increase, not significant', value > 0.1 & direction == -1 ~ 'Decrease, not significant', value > 0.05 & value < 0.1 &  direction == 1 ~ 'Significant increase @ 10%', value < 0.05 & direction == 1 ~ 'Significant increase @ 5%', value < 0.05 &  direction == -1  ~ 'Significant decrease @ 5%',value > 0.05 & value < 0.1 & direction == -1 ~ 'Significant decrease @ 10%', value == 'NaN' ~ 'NA, Failed Test')) %>%
+  mutate(graph = recode_factor(graph, `1` = 'Significant increase @ 5%', `2` = 'Significant increase @ 10%', `3` = 'Increase, not significant', `4` = 'Decrease, not significant', `5` = 'NA, Failed Test'))
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = df2, aes(x = lon, y = lat, color = elev)) + 
+   scale_colour_gradient(low = "cornsilk2", high = "#003300", breaks = c(round(min(df2$elev), 0), 2000, 3000, round(max(df2$elev), 0))) +
+  geom_hline(yintercept=41, size = 0.6) + geom_hline(yintercept=37, size = 0.6) +
+  geom_vline(xintercept=-109, size = 0.6) + geom_vline(xintercept=-102, size = 0.6) +
+  #scale_color_continuous(type = "viridis") +
+  geom_point(data = jan_p.graph, aes(x = lon, y = lat, fill = graph), shape = 21) + scale_fill_manual(values = c('firebrick', 'darkorange','gold','darkgray')) + #, color = graph)) #+ 
+  theme_bw() + #scale_color_manual(values = c('firebrick', 'darkorange','gold','lightblue')) + 
+  ggtitle('January 95th Percentile HDWI Trends in CO') + labs(fill = '95th Percentile HDWI Trend', color = 'Elevation (m)') + 
+  scale_x_continuous(breaks = seq(-109, -102, 1), expand = c(0.01,0.01)) +
+  scale_y_continuous(breaks = seq(37, 41, 1), expand = c(0.01,0.01)) +
+  theme_bw() + theme(legend.title = element_text(size=9.2, face = 'bold'), panel.border=element_rect(color="transparent"), plot.margin =
+                       margin(t = 0,  # Top margin
+                             r = 0,  # Right margin
+                             b = 0,  # Bottom margin
+                             l = 0)) +
+  guides(fill = guide_legend(order = 1)) + coord_equal(ratio = 1/.77) 
+```
+
+February
+
+```{r}
+pval.tab <- data.frame(CO_feb.pvals[,,1])
+pval.tab$lat = seq(41, 37, -.25)
+
+sign.tab <- data.frame(CO_feb.pvals[,,2])
+sign.tab$lat = seq(41, 37, -.25)
+
+df_feb.p <- reshape2::melt(pval.tab, id.var='lat')
+sign.melt <- reshape2::melt(sign.tab, id.var='lat')
+
+df_feb.p$lon <- -1*as.numeric(sub('..', '', as.character(df_feb.p$variable)))
+
+feb_p.graph<-cbind(df_feb.p, direction = sign.melt[,3]) %>%
+  mutate(graph = case_when(value > 0.1 & direction == 1 ~ 'Increase, not significant', value > 0.1 & direction == -1 ~ 'Decrease, not significant', value > 0.05 & value < 0.1 &  direction == 1 ~ 'Significant increase @ 10%', value < 0.05 & direction == 1 ~ 'Significant increase @ 5%', value < 0.05 &  direction == -1  ~ 'Significant decrease @ 5%',value > 0.05 & value < 0.1 & direction == -1 ~ 'Significant decrease @ 10%')) %>%
+  mutate(graph = recode_factor(graph, `1` = 'Significant increase @ 5%', `2` = 'Significant increase @ 10%', `3` = 'Increase, not significant', `4` = 'Decrease, not significant'))
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = df2, aes(x = lon, y = lat, color = elev)) + 
+  scale_colour_gradient(low = "cornsilk2", high = "#003300", breaks = c(round(min(df2$elev), 0), 2000, 3000, round(max(df2$elev), 0))) +
+  geom_hline(yintercept=41, size = 0.6) + geom_hline(yintercept=37, size = 0.6) +
+  geom_vline(xintercept=-109, size = 0.6) + geom_vline(xintercept=-102, size = 0.6) +
+  geom_point(data = feb_p.graph, aes(x = lon, y = lat, fill = graph), shape = 21) + scale_fill_manual(values = c('firebrick', 'darkorange','gold','lightblue')) +
+  ggtitle('February 95th Percentile HDWI Trends in CO') + labs(fill = '95th Percentile HDWI Trend', color = 'Elevation (m)') + 
+  scale_x_continuous(breaks = seq(-109, -102, 1), expand = c(0.01,0.01)) +
+  scale_y_continuous(breaks = seq(37, 41, 1), expand = c(0.01,0.01)) +
+  theme_bw() + theme(legend.title = element_text(size=9.2, face = 'bold'), panel.border=element_rect(color="transparent")) +
+  guides(fill = guide_legend(order = 1)) + coord_equal(ratio = 1/.77) 
+```
+
+March
+
+```{r}
+pval.tab <- data.frame(CO_mar.pvals[,,1])
+pval.tab$lat = seq(41, 37, -.25)
+
+sign.tab <- data.frame(CO_mar.pvals[,,2])
+sign.tab$lat = seq(41, 37, -.25)
+
+df_mar.p <- reshape2::melt(pval.tab, id.var='lat')
+sign.melt <- reshape2::melt(sign.tab, id.var='lat')
+
+df_mar.p$lon <- -1*as.numeric(sub('..', '', as.character(df_mar.p$variable)))
+
+mar_p.graph<-cbind(df_mar.p, direction = sign.melt[,3]) %>%
+  mutate(graph = case_when(value > 0.1 & direction == 1 ~ 'Increase, not significant', value > 0.1 & direction == -1 ~ 'Decrease, not significant', value > 0.05 & value < 0.1 &  direction == 1 ~ 'Significant increase @ 10%', value < 0.05 & direction == 1 ~ 'Significant increase @ 5%', value < 0.05 &  direction == -1  ~ 'Significant decrease @ 5%',value > 0.05 & value < 0.1 & direction == -1 ~ 'Significant decrease @ 10%')) #%>%
+  # mutate(graph = fct_relevel(sizes, "small", "medium", "large"))
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = df2, aes(x = lon, y = lat, color = elev)) + 
+  scale_colour_gradient(low = "cornsilk2", high = "#003300", breaks = c(round(min(df2$elev), 0), 2000, 3000, round(max(df2$elev), 0))) +
+  geom_hline(yintercept=41, size = 0.6) + geom_hline(yintercept=37, size = 0.6) +
+  geom_vline(xintercept=-109, size = 0.6) + geom_vline(xintercept=-102, size = 0.6) +
+  geom_point(data = mar_p.graph, aes(x = lon, y = lat, fill = graph), shape = 21) + scale_fill_manual(values = c('firebrick', 'darkorange','gold','lightblue')) +
+  ggtitle('March 95th Percentile HDWI Trends in CO') + labs(fill = '95th Percentile HDWI Trend', color = 'Elevation (m)') + 
+  scale_x_continuous(breaks = seq(-109, -102, 1), expand = c(0.01,0.01)) +
+  scale_y_continuous(breaks = seq(37, 41, 1), expand = c(0.01,0.01)) +
+  theme_bw() + theme(legend.title = element_text(size=9.2, face = 'bold'), panel.border=element_rect(color="transparent")) +
+  guides(fill = guide_legend(order = 1)) + coord_equal(ratio = 1/.77) 
+```
+
+April
+
+```{r}
+pval.tab <- data.frame(CO_apr.pvals[,,1])
+pval.tab$lat = seq(41, 37, -.25)
+
+sign.tab <- data.frame(CO_apr.pvals[,,2])
+sign.tab$lat = seq(41, 37, -.25)
+
+df_apr.p <- reshape2::melt(pval.tab, id.var='lat')
+sign.melt <- reshape2::melt(sign.tab, id.var='lat')
+
+df_apr.p$lon <- -1*as.numeric(sub('..', '', as.character(df_apr.p$variable)))
+
+apr_p.graph<-cbind(df_apr.p, direction = sign.melt[,3]) %>%
+  mutate(graph = case_when(value > 0.1 & direction == 1 ~ 'Increase, not significant', value > 0.1 & direction == -1 ~ 'Decrease, not significant', value > 0.05 & value < 0.1 &  direction == 1 ~ 'Significant increase @ 10%', value < 0.05 & direction == 1 ~ 'Significant increase @ 5%', value < 0.05 &  direction == -1  ~ 'Significant decrease @ 5%',value > 0.05 & value < 0.1 & direction == -1 ~ 'Significant decrease @ 10%')) %>%
+  mutate(graph = recode_factor(graph, `1` = 'Significant increase @ 5%', `2` = 'Significant increase @ 10%', `3` = 'Increase, not significant', `4` = 'Decrease, not significant'))
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = df2, aes(x = lon, y = lat, color = elev)) + 
+  scale_colour_gradient(low = "cornsilk2", high = "#003300", breaks = c(round(min(df2$elev), 0), 2000, 3000, round(max(df2$elev), 0))) +
+  geom_hline(yintercept=41, size = 0.6) + geom_hline(yintercept=37, size = 0.6) +
+  geom_vline(xintercept=-109, size = 0.6) + geom_vline(xintercept=-102, size = 0.6) +
+  geom_point(data = apr_p.graph, aes(x = lon, y = lat, fill = graph), shape = 21) + scale_fill_manual(values = c('firebrick', 'darkorange','gold','lightblue')) +
+  ggtitle('April 95th Percentile HDWI Trends in CO') + labs(fill = '95th Percentile HDWI Trend', color = 'Elevation (m)') + 
+  scale_x_continuous(breaks = seq(-109, -102, 1), expand = c(0.01,0.01)) +
+  scale_y_continuous(breaks = seq(37, 41, 1), expand = c(0.01,0.01)) +
+  theme_bw() + theme(legend.title = element_text(size=9.2, face = 'bold'), panel.border=element_rect(color="transparent")) +
+  guides(fill = guide_legend(order = 1)) + coord_equal(ratio = 1/.77) 
+```
+
+May
+
+```{r}
+pval.tab <- data.frame(CO_may.pvals[,,1])
+pval.tab$lat = seq(41, 37, -.25)
+
+sign.tab <- data.frame(CO_may.pvals[,,2])
+sign.tab$lat = seq(41, 37, -.25)
+
+df_may.p <- reshape2::melt(pval.tab, id.var='lat')
+sign.melt <- reshape2::melt(sign.tab, id.var='lat')
+
+df_may.p$lon <- -1*as.numeric(sub('..', '', as.character(df_may.p$variable)))
+
+may_p.graph<-cbind(df_may.p, direction = sign.melt[,3]) %>%
+  mutate(graph = case_when(value > 0.1 & direction == 1 ~ 'Increase, not significant', value > 0.1 & direction == -1 ~ 'Decrease, not significant', value > 0.05 & value < 0.1 &  direction == 1 ~ 'Significant increase @ 10%', value < 0.05 & direction == 1 ~ 'Significant increase @ 5%', value < 0.05 &  direction == -1  ~ 'Significant decrease @ 5%',value > 0.05 & value < 0.1 & direction == -1 ~ 'Significant decrease @ 10%', value == 'NaN' ~ 'NA, Failed Test')) %>%
+  mutate(graph = recode_factor(graph, `1` = 'Significant increase @ 5%', `2` = 'Significant increase @ 10%', `3` = 'Increase, not significant', `4` = 'Decrease, not significant', `5` = 'NA, Failed Test'))
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = df2, aes(x = lon, y = lat, color = elev)) + 
+  scale_colour_gradient(low = "cornsilk2", high = "#003300", breaks = c(round(min(df2$elev), 0), 2000, 3000, round(max(df2$elev), 0))) + 
+  geom_hline(yintercept=41, size = 0.6) + geom_hline(yintercept=37, size = 0.6) +
+  geom_vline(xintercept=-109, size = 0.6) + geom_vline(xintercept=-102, size = 0.6) +
+  geom_point(data = may_p.graph, aes(x = lon, y = lat, fill = graph), shape = 21) + scale_fill_manual(values = c('firebrick', 'darkorange','gold','darkgray')) +
+  ggtitle('May 95th Percentile HDWI Trends in CO') + labs(fill = '95th Percentile HDWI Trend', color = 'Elevation (m)') + 
+  theme_bw() + theme(legend.title = element_text(size=9.2, face = 'bold')) + 
+  scale_x_continuous(breaks = seq(-109, -102, 1), expand = c(0.01,0.01)) +
+  scale_y_continuous(breaks = seq(37, 41, 1), expand = c(0.01,0.01)) +
+  theme_bw() + theme(legend.title = element_text(size=9.2, face = 'bold'), panel.border=element_rect(color="transparent")) +
+  guides(fill = guide_legend(order = 1)) + coord_equal(ratio = 1/.77) 
+```
+
+June
+
+```{r}
+pval.tab <- data.frame(CO_jun.pvals[,,1])
+pval.tab$lat = seq(41, 37, -.25)
+
+sign.tab <- data.frame(CO_jun.pvals[,,2])
+sign.tab$lat = seq(41, 37, -.25)
+
+df_jun.p <- reshape2::melt(pval.tab, id.var='lat')
+sign.melt <- reshape2::melt(sign.tab, id.var='lat')
+
+df_jun.p$lon <- -1*as.numeric(sub('..', '', as.character(df_jun.p$variable)))
+
+jun_p.graph<-cbind(df_jun.p, direction = sign.melt[,3]) %>%
+  mutate(graph = case_when(value > 0.1 & direction == 1 ~ 'Increase, not significant', value > 0.1 & direction == -1 ~ 'Decrease, not significant', value > 0.05 & value < 0.1 &  direction == 1 ~ 'Significant increase @ 10%', value < 0.05 & direction == 1 ~ 'Significant increase @ 5%', value < 0.05 &  direction == -1  ~ 'Significant decrease @ 5%',value > 0.05 & value < 0.1 & direction == -1 ~ 'Significant decrease @ 10%')) %>%
+  mutate(graph = recode_factor(graph, `1` = 'Significant increase @ 5%', `2` = 'Significant increase @ 10%', `3` = 'Increase, not significant', `4` = 'Decrease, not significant'))
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = df2, aes(x = lon, y = lat, color = elev)) + 
+  scale_colour_gradient(low = "cornsilk2", high = "#003300", breaks = c(round(min(df2$elev), 0), 2000, 3000, round(max(df2$elev), 0))) +
+    geom_hline(yintercept=41, size = 0.6) + geom_hline(yintercept=37, size = 0.6) +
+  geom_vline(xintercept=-109, size = 0.6) + geom_vline(xintercept=-102, size = 0.6) +
+  geom_point(data = jun_p.graph, aes(x = lon, y = lat, fill = graph), shape = 21) + scale_fill_manual(values = c('firebrick', 'darkorange','gold','lightblue')) +
+  ggtitle('June 95th Percentile HDWI Trends in CO') + labs(fill = '95th Percentile HDWI Trend', color = 'Elevation (m)') + 
+  scale_x_continuous(breaks = seq(-109, -102, 1), expand = c(0.01,0.01)) +
+  scale_y_continuous(breaks = seq(37, 41, 1), expand = c(0.01,0.01)) +
+  theme_bw() + theme(legend.title = element_text(size=9.2, face = 'bold'), panel.border=element_rect(color="transparent")) +
+  guides(fill = guide_legend(order = 1)) + coord_equal(ratio = 1/.77) 
+```
+
+July
+
+```{r}
+pval.tab <- data.frame(CO_jul.pvals[,,1])
+pval.tab$lat = seq(41, 37, -.25)
+
+sign.tab <- data.frame(CO_jul.pvals[,,2])
+sign.tab$lat = seq(41, 37, -.25)
+
+df_jul.p <- reshape2::melt(pval.tab, id.var='lat')
+sign.melt <- reshape2::melt(sign.tab, id.var='lat')
+
+df_jul.p$lon <- -1*as.numeric(sub('..', '', as.character(df_jul.p$variable)))
+
+jul_p.graph<-cbind(df_jul.p, direction = sign.melt[,3]) %>%
+  mutate(graph = case_when(value > 0.1 & direction == 1 ~ 'Increase, not significant', value > 0.1 & direction == -1 ~ 'Decrease, not significant', value > 0.05 & value < 0.1 &  direction == 1 ~ 'Significant increase @ 10%', value < 0.05 & direction == 1 ~ 'Significant increase @ 5%', value < 0.05 &  direction == -1  ~ 'Significant decrease @ 5%',value > 0.05 & value < 0.1 & direction == -1 ~ 'Significant decrease @ 10%'))%>%
+  mutate(graph = recode_factor(graph, `1` = 'Significant increase @ 5%', `2` = 'Significant increase @ 10%', `3` = 'Increase, not significant', `4` = 'Decrease, not significant'))
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = df2, aes(x = lon, y = lat, color = elev)) + 
+  scale_colour_gradient(low = "cornsilk2", high = "#003300", breaks = c(round(min(df2$elev), 0), 2000, 3000, round(max(df2$elev), 0))) + 
+    geom_hline(yintercept=41, size = 0.6) + geom_hline(yintercept=37, size = 0.6) +
+  geom_vline(xintercept=-109, size = 0.6) + geom_vline(xintercept=-102, size = 0.6) +
+  geom_point(data = jul_p.graph, aes(x = lon, y = lat, fill = graph), shape = 21) + scale_fill_manual(values = c('firebrick', 'darkorange','gold','lightblue')) +
+  ggtitle('July 95th Percentile HDWI Trends in CO') + labs(fill = '95th Percentile HDWI Trend', color = 'Elevation (m)') + 
+  scale_x_continuous(breaks = seq(-109, -102, 1), expand = c(0.01,0.01)) +
+  scale_y_continuous(breaks = seq(37, 41, 1), expand = c(0.01,0.01)) +
+  theme_bw() + theme(legend.title = element_text(size=9.2, face = 'bold'), panel.border=element_rect(color="transparent")) +
+  guides(fill = guide_legend(order = 1)) + coord_equal(ratio = 1/.77) 
+```
+
+August
+
+```{r}
+pval.tab <- data.frame(CO_aug.pvals[,,1])
+pval.tab$lat = seq(41, 37, -.25)
+
+sign.tab <- data.frame(CO_aug.pvals[,,2])
+sign.tab$lat = seq(41, 37, -.25)
+
+df_aug.p <- reshape2::melt(pval.tab, id.var='lat')
+sign.melt <- reshape2::melt(sign.tab, id.var='lat')
+
+df_aug.p$lon <- -1*as.numeric(sub('..', '', as.character(df_aug.p$variable)))
+
+aug_p.graph<-cbind(df_aug.p, direction = sign.melt[,3]) %>%
+  mutate(graph = case_when(value > 0.1 & direction == 1 ~ 'Increase, not significant', value > 0.1 & direction == -1 ~ 'Decrease, not significant', value > 0.05 & value < 0.1 &  direction == 1 ~ 'Significant increase @ 10%', value < 0.05 & direction == 1 ~ 'Significant increase @ 5%', value < 0.05 &  direction == -1  ~ 'Significant decrease @ 5%',value > 0.05 & value < 0.1 & direction == -1 ~ 'Significant decrease @ 10%', value == 'NaN' ~ 'NA, Failed Test')) %>%
+  mutate(graph = recode_factor(graph, `1` = 'Significant increase @ 5%', `2` = 'Significant increase @ 10%', `3` = 'Increase, not significant', `4` = 'Decrease, not significant', `5` = 'NA, Failed Test'))
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = df2, aes(x = lon, y = lat, color = elev)) + 
+  scale_colour_gradient(low = "cornsilk2", high = "#003300", breaks = c(round(min(df2$elev), 0), 2000, 3000, round(max(df2$elev), 0))) + 
+  geom_hline(yintercept=41, size = 0.6) + geom_hline(yintercept=37, size = 0.6) +
+  geom_vline(xintercept=-109, size = 0.6) + geom_vline(xintercept=-102, size = 0.6) +
+  geom_point(data = aug_p.graph, aes(x = lon, y = lat, fill = graph), shape = 21) + scale_fill_manual(values = c('firebrick', 'darkorange','gold','lightblue')) +
+  ggtitle('August 95th Percentile HDWI Trends in CO') + labs(fill = '95th Percentile HDWI Trend', color = 'Elevation (m)') + 
+  scale_x_continuous(breaks = seq(-109, -102, 1), expand = c(0.01,0.01)) +
+  scale_y_continuous(breaks = seq(37, 41, 1), expand = c(0.01,0.01)) +
+  theme_bw() + theme(legend.title = element_text(size=9.2, face = 'bold'), panel.border=element_rect(color="transparent")) +
+  guides(fill = guide_legend(order = 1)) + coord_equal(ratio = 1/.77) 
+```
+
+September
+
+```{r}
+pval.tab <- data.frame(CO_sep.pvals[,,1])
+pval.tab$lat = seq(41, 37, -.25)
+
+sign.tab <- data.frame(CO_sep.pvals[,,2])
+sign.tab$lat = seq(41, 37, -.25)
+
+df_sep.p <- reshape2::melt(pval.tab, id.var='lat')
+sign.melt <- reshape2::melt(sign.tab, id.var='lat')
+
+df_sep.p$lon <- -1*as.numeric(sub('..', '', as.character(df_sep.p$variable)))
+
+sep_p.graph<-cbind(df_sep.p, direction = sign.melt[,3]) %>%
+  mutate(graph = case_when(value > 0.1 & direction == 1 ~ 'Increase, not significant', value > 0.1 & direction == -1 ~ 'Decrease, not significant', value > 0.05 & value < 0.1 &  direction == 1 ~ 'Significant increase @ 10%', value < 0.05 & direction == 1 ~ 'Significant increase @ 5%', value < 0.05 &  direction == -1  ~ 'Significant decrease @ 5%',value > 0.05 & value < 0.1 & direction == -1 ~ 'Significant decrease @ 10%')) %>%
+  mutate(graph = recode_factor(graph, `1` = 'Significant increase @ 5%', `2` = 'Significant increase @ 10%', `3` = 'Increase, not significant', `4` = 'Decrease, not significant'))
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = df2, aes(x = lon, y = lat, color = elev)) + 
+  scale_colour_gradient(low = "cornsilk2", high = "#003300", breaks = c(round(min(df2$elev), 0), 2000, 3000, round(max(df2$elev), 0))) + 
+    geom_hline(yintercept=41, size = 0.6) + geom_hline(yintercept=37, size = 0.6) +
+  geom_vline(xintercept=-109, size = 0.6) + geom_vline(xintercept=-102, size = 0.6) +
+  geom_point(data = sep_p.graph, aes(x = lon, y = lat, fill = graph), shape = 21) + scale_fill_manual(values = c('firebrick', 'darkorange','gold','lightblue')) +
+  ggtitle('September 95th Percentile HDWI Trends in CO') + labs(fill = '95th Percentile HDWI Trend', color = 'Elevation (m)') + 
+  scale_x_continuous(breaks = seq(-109, -102, 1), expand = c(0.01,0.01)) +
+  scale_y_continuous(breaks = seq(37, 41, 1), expand = c(0.01,0.01)) +
+  theme_bw() + theme(legend.title = element_text(size=9.2, face = 'bold'), panel.border=element_rect(color="transparent")) +
+  guides(fill = guide_legend(order = 1)) + coord_equal(ratio = 1/.77) 
+```
+
+October
+
+```{r}
+pval.tab <- data.frame(CO_oct.pvals[,,1])
+pval.tab$lat = seq(41, 37, -.25)
+
+sign.tab <- data.frame(CO_oct.pvals[,,2])
+sign.tab$lat = seq(41, 37, -.25)
+
+df_oct.p <- reshape2::melt(pval.tab, id.var='lat')
+sign.melt <- reshape2::melt(sign.tab, id.var='lat')
+
+df_oct.p$lon <- -1*as.numeric(sub('..', '', as.character(df_oct.p$variable)))
+
+oct_p.graph<-cbind(df_oct.p, direction = sign.melt[,3]) %>%
+  mutate(graph = case_when(value >= 0.1 & direction == 1 ~ 'Increase, not significant', value > 0.1 & direction == -1 ~ 'Decrease, not significant', value > 0.05 & value < 0.1 &  direction == 1 ~ 'Significant increase @ 10%', value < 0.05 & direction == 1 ~ 'Significant increase @ 5%', value < 0.05 &  direction == -1  ~ 'Significant decrease @ 5%',value > 0.05 & value < 0.1 & direction == -1 ~ 'Significant decrease @ 10%', value == 'NaN' ~ 'NA, Failed Test')) %>%
+  mutate(graph = recode_factor(graph, `1` = 'Significant increase @ 5%', `2` = 'Significant increase @ 10%', `3` = 'Increase, not significant', `4` = 'Decrease, not significant', `5` = 'NA, Failed Test'))
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = df2, aes(x = lon, y = lat, color = elev)) + 
+  scale_colour_gradient(low = "cornsilk2", high = "#003300", breaks = c(round(min(df2$elev), 0), 2000, 3000, round(max(df2$elev), 0))) + 
+    geom_hline(yintercept=41, size = 0.6) + geom_hline(yintercept=37, size = 0.6) +
+  geom_vline(xintercept=-109, size = 0.6) + geom_vline(xintercept=-102, size = 0.6) +
+  geom_point(data = oct_p.graph, aes(x = lon, y = lat, fill = graph), shape = 21) + scale_fill_manual(values = c('firebrick', 'darkorange','gold','darkgray')) +
+  ggtitle('October 95th Percentile HDWI Trends in CO') + labs(fill = '95th Percentile HDWI Trend', color = 'Elevation (m)') + 
+  scale_x_continuous(breaks = seq(-109, -102, 1), expand = c(0.01,0.01)) +
+  scale_y_continuous(breaks = seq(37, 41, 1), expand = c(0.01,0.01)) +
+  theme_bw() + theme(legend.title = element_text(size=9.2, face = 'bold'), panel.border=element_rect(color="transparent")) +
+  guides(fill = guide_legend(order = 1)) + coord_equal(ratio = 1/.77) 
+```
+
+November
+
+```{r}
+pval.tab <- data.frame(CO_nov.pvals[,,1])
+pval.tab$lat = seq(41, 37, -.25)
+
+sign.tab <- data.frame(CO_nov.pvals[,,2])
+sign.tab$lat = seq(41, 37, -.25)
+
+df_nov.p <- reshape2::melt(pval.tab, id.var='lat')
+sign.melt <- reshape2::melt(sign.tab, id.var='lat')
+
+df_nov.p$lon <- -1*as.numeric(sub('..', '', as.character(df_nov.p$variable)))
+
+nov_p.graph<-cbind(df_nov.p, direction = sign.melt[,3]) %>%
+  mutate(graph = case_when(value > 0.1 & direction == 1 ~ 'Increase, not significant', value > 0.1 & direction == -1 ~ 'Decrease, not significant', value > 0.05 & value < 0.1 &  direction == 1 ~ 'Significant increase @ 10%', value < 0.05 & direction == 1 ~ 'Significant increase @ 5%', value < 0.05 &  direction == -1  ~ 'Significant decrease @ 5%',value > 0.05 & value < 0.1 & direction == -1 ~ 'Significant decrease @ 10%', value == 'NaN' ~ 'NA, Failed Test')) %>%
+  mutate(graph = recode_factor(graph, `1` = 'Significant increase @ 5%', `2` = 'Significant increase @ 10%', `3` = 'Increase, not significant', `4` = 'Decrease, not significant', `5` = 'NA, Failed Test'))
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = df2, aes(x = lon, y = lat, color = elev)) + 
+  scale_colour_gradient(low = "cornsilk2", high = "#003300", breaks = c(round(min(df2$elev), 0), 2000, 3000, round(max(df2$elev), 0))) + 
+  geom_hline(yintercept=41, size = 0.6) + geom_hline(yintercept=37, size = 0.6) +
+  geom_vline(xintercept=-109, size = 0.6) + geom_vline(xintercept=-102, size = 0.6) +
+  geom_point(data = nov_p.graph, aes(x = lon, y = lat, fill = graph), shape = 21) + scale_fill_manual(values = c('firebrick', 'darkorange','gold','lightblue')) +
+  ggtitle('November 95th Percentile HDWI Trends in CO') + labs(fill = '95th Percentile HDWI Trend', color = 'Elevation (m)') + 
+  scale_x_continuous(breaks = seq(-109, -102, 1), expand = c(0.01,0.01)) +
+  scale_y_continuous(breaks = seq(37, 41, 1), expand = c(0.01,0.01)) +
+  theme_bw() + theme(legend.title = element_text(size=9.2, face = 'bold'), panel.border=element_rect(color="transparent")) +
+  guides(fill = guide_legend(order = 1)) + coord_equal(ratio = 1/.77) 
+```
+
+December
+
+```{r}
+pval.tab <- data.frame(CO_dec.pvals[,,1])
+pval.tab$lat = seq(41, 37, -.25)
+
+sign.tab <- data.frame(CO_dec.pvals[,,2])
+sign.tab$lat = seq(41, 37, -.25)
+
+df_dec.p <- reshape2::melt(pval.tab, id.var='lat')
+sign.melt <- reshape2::melt(sign.tab, id.var='lat')
+
+df_dec.p$lon <- -1*as.numeric(sub('..', '', as.character(df_dec.p$variable)))
+
+dec_p.graph<-cbind(df_dec.p, direction = sign.melt[,3]) %>%
+  mutate(graph = case_when(value > 0.1 & direction == 1 ~ 'Increase, not significant', value > 0.1 & direction == -1 ~ 'Decrease, not significant', value > 0.05 & value < 0.1 &  direction == 1 ~ 'Significant increase @ 10%', value < 0.05 & direction == 1 ~ 'Significant increase @ 5%', value < 0.05 &  direction == -1  ~ 'Significant decrease @ 5%',value > 0.05 & value < 0.1 & direction == -1 ~ 'Significant decrease @ 10%', value == 'NaN' ~ 'NA, Failed Test')) %>%
+  mutate(graph = recode_factor(graph, `1` = 'Significant increase @ 5%', `2` = 'Significant increase @ 10%', `3` = 'Increase, not significant', `4` = 'Decrease, not significant', `5` = 'NA, Failed Test'))
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = df2, aes(x = lon, y = lat, color = elev)) + 
+  scale_colour_gradient(low = "cornsilk2", high = "#003300", breaks = c(round(min(df2$elev), 0), 2000, 3000, round(max(df2$elev), 0))) +
+  geom_hline(yintercept=41, size = 0.6) + geom_hline(yintercept=37, size = 0.6) +
+  geom_vline(xintercept=-109, size = 0.6) + geom_vline(xintercept=-102, size = 0.6) +
+  geom_point(data = dec_p.graph, aes(x = lon, y = lat, fill = graph), shape = 21) + scale_fill_manual(values = c('firebrick', 'darkorange','gold','lightblue')) +
+  ggtitle('December 95th Percentile HDWI Trends in CO') + labs(fill = '95th Percentile HDWI Trend', color = 'Elevation (m)') + 
+  scale_x_continuous(breaks = seq(-109, -102, 1), expand = c(0.01,0.01)) +
+  scale_y_continuous(breaks = seq(37, 41, 1), expand = c(0.01,0.01)) +
+  theme_bw() + theme(legend.title = element_text(size=9.2, face = 'bold'), panel.border=element_rect(color="transparent")) +
+  guides(fill = guide_legend(order = 1)) + coord_equal(ratio = 1/.77) 
+```
