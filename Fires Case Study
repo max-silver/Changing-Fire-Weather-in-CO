@@ -1,0 +1,356 @@
+```{r}
+library('ncdf4')
+library(ggplot2)
+library(dplyr)
+```
+
+```{r echo = FALSE}
+q95 <- function(x) {
+  return(quantile(x, .95))
+  }
+q75 <- function(x) {
+  return(quantile(x, .75))
+}
+q25 <- function(x) {
+  return(quantile(x, .25))
+  }
+q05 <- function(x) {
+  return(quantile(x, .05))
+}
+```
+
+```{r echo = FALSE}
+obs_hdwi <- read.csv('DAILY-OBSERVATIONAL-HDWI.csv')
+```
+
+East Troublesome fire (October 14, 2020), Fall 2020
+
+```{r}
+east.obs <- obs_hdwi[6857:6867,] %>% mutate(fire = ifelse(Date == '10/14/2020', 'East Fire Start Date', 0))
+```
+
+```{r}
+ggplot(data = east.obs, aes(x = as.Date(Date, '%m/%d/%Y'), y = HDW)) +
+  #scale_color_manual(values = c('black', 'red3')) + 
+  scale_shape_manual(values = c(20, 24)) + 
+  ggtitle("Observed HDWI Values for Dates Surrounding the \n East Troublesome Fire") + 
+
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = q95((obs_hdwi[6819:6909,])$HDW), ymax = 900, fill = '>95'), alpha = 0.6) +
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = q75((obs_hdwi[6819:6909,])$HDW), ymax = q95((obs_hdwi[6819:6909,])$HDW), fill = '75-95'), alpha = 0.6) + 
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = median((obs_hdwi[6819:6909,])$HDW), ymax = q75((obs_hdwi[6819:6909,])$HDW), fill = '50-75'), alpha = 0.55) + 
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = q25((obs_hdwi[6819:6909,])$HDW), ymax = median((obs_hdwi[6819:6909,])$HDW), fill = '25-50'), alpha = 0.5) + 
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = q05((obs_hdwi[6819:6909,])$HDW), ymax = q25((obs_hdwi[6819:6909,])$HDW), fill = '5-25'), alpha = 0.5) + 
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = 0, ymax = q05((obs_hdwi[6819:6909,])$HDW), fill = '<5'), alpha = 0.45) + 
+  scale_fill_manual(breaks = c('>95', '75-95', "50-75", '25-50', '5-25', '<5'), values = c('>95'='darkred', '75-95'='firebrick3', "50-75"='orangered3', '25-50'='darkorange2', '5-25'='orange', '<5'='gold')) + 
+  geom_line(alpha = 0.7, linewidth = .8) + geom_point(aes(shape = fire, size = fire), fill = 'red2', stroke = 1) + scale_size_manual(values = c(2, 3.5)) + theme_bw() + 
+   scale_x_continuous(minor_breaks = 0, n.breaks = nrow(east.obs), labels=format(as.Date(east.obs$Date, '%m/%d/%Y'), format="%m/%d")) + theme(axis.text.x = element_text(angle = 30)) +
+ labs(x = 'Date in October 2020', y = 'HDWI', color = NULL, shape = NULL, fill = 'Seasonal HDWI Percentile') + guides(color = 'none', shape = 'none', size = 'none', fill = guide_legend(override.aes = list(alpha = 0.15))) + theme(legend.title= element_text(size=9.5)) + 
+  theme(axis.text.x = element_text(face="bold", color = 'black')) + 
+  theme(axis.text.y = element_text(face="bold", color = 'black'))
+```
+
+```{r}
+re2020 <- nc_open('CO2020.nc')
+ncvar_get(re2020, 'longitude')[12]
+ncvar_get(re2020, 'latitude')[4]
+
+#tower
+tower_u100 <- ncvar_get(re2020, 'u100')[16, 5,] #all u100 values for the tower coordinates 
+tower_v100 <- ncvar_get(re2020, 'v100')[16, 5,] #etc
+tower_u10 <- ncvar_get(re2020, 'u10')[16, 5,]
+tower_v10 <- ncvar_get(re2020, 'v10')[16, 5,]
+data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+data1$time1 = ncvar_get(re2020, "time")
+data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+data1$dew_point = ncvar_get(re2020, 'd2m')[16, 5,]
+data1$temp = ncvar_get(re2020, 't2m')[16, 5,]
+tower_2020 <- data1 %>%
+  mutate(time2 = time1 - 1069440) %>%
+  mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+  mutate(day = floor(time2/24) + 1) %>%
+  mutate(hour = time2 %% 24) %>%
+  mutate(max_wind = pmax(wind10, wind100)) %>%
+  mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+  select(-time2, -day, -time1) %>%
+  group_by(date) %>% summarize_at(c('VPD_hPa','max_wind', 'temp'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+tower_2020
+
+#Fire
+tower_u100 <- ncvar_get(re2020, 'u100')[12,4,] #all u100 values for the tower coordinates 
+tower_v100 <- ncvar_get(re2020, 'v100')[12,4,] #etc
+tower_u10 <- ncvar_get(re2020, 'u10')[12,4,]
+tower_v10 <- ncvar_get(re2020, 'v10')[12,4,]
+data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+data1$time1 = ncvar_get(re2020, "time")
+data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+data1$dew_point = ncvar_get(re2020, 'd2m')[12,4,]
+data1$temp = ncvar_get(re2020, 't2m')[12,4,]
+east_2020 <- data1 %>%
+  mutate(time2 = time1 - 1069440) %>%
+  mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+  mutate(day = floor(time2/24) + 1) %>%
+  mutate(hour = time2 %% 24) %>%
+  mutate(max_wind = pmax(wind10, wind100)) %>%
+  mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+  select(-time2, -day, -time1) %>%
+  group_by(date) %>% summarize_at(c('VPD_hPa','max_wind', 'temp'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+east_2020
+```
+
+```{r}
+east.tower <- tower_2020[283:293,] %>% mutate(fire = ifelse(date == '2020-10-14', 'east Fire Start Date', 0))
+east.re <- east_2020[283:293,] %>% mutate(fire = ifelse(date == '2020-10-14', 'east Fire Start Date', 0))
+```
+
+```{r}
+ggplot(data = east.tower, aes(x = as.Date(date, '%m/%d/%Y'), y = HDWI)) + 
+  scale_shape_manual(values = c(20, 24)) + 
+  ggtitle("Reanalysis HDWI (coordinates closest to NREL) Values for \n Dates Surrounding the East Troublesome Fire") + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q95((tower_2020[245:335,])$HDWI), ymax = 400, fill = '>95'), alpha = 0.6) +
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q75((tower_2020[245:335,])$HDWI), ymax = q95((tower_2020[245:335,])$HDWI), fill = '75-95'), alpha = 0.6) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = median((tower_2020[245:335,])$HDWI), ymax = q75((tower_2020[245:335,])$HDWI), fill = '50-75'), alpha = 0.55) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q25((tower_2020[245:335,])$HDWI), ymax = median((tower_2020[245:335,])$HDWI), fill = '25-50'), alpha = 0.55) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q05((tower_2020[245:335,])$HDWI), ymax = q25((tower_2020[245:335,])$HDWI), fill = '5-25'), alpha = 0.5) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = 0, ymax = q05((tower_2020[245:335,])$HDWI), fill = '<5'), alpha = 0.5) + 
+  scale_fill_manual(breaks = c('>95', '75-95', "50-75", '25-50', '5-25', '<5'), values = c('>95'='darkred', '75-95'='firebrick3', "50-75"='orangered3', '25-50'='darkorange2', '5-25'='orange', '<5'='gold')) + 
+  geom_line(alpha = 0.7, size = .8) + geom_point(aes(shape = fire, size = fire), fill = 'red2', stroke = 1) + scale_size_manual(values = c(2, 3.5)) + theme_bw() + 
+   scale_x_continuous(minor_breaks = 0, n.breaks = nrow(east.obs), labels=format(as.Date(east.obs$Date, '%m/%d/%Y'), format="%m/%d")) + theme(axis.text.x = element_text(angle = 30)) +
+ labs(x = 'Date in October 2020', y = 'HDWI', color = NULL, shape = NULL, fill = 'Seasonal HDWI Percentile') + guides(color = 'none', shape = 'none', size = 'none', fill = guide_legend(override.aes = list(alpha = 0.15))) + theme(legend.title= element_text(size=9.5)) + 
+  theme(axis.text.x = element_text(face="bold", color = 'black')) + 
+  theme(axis.text.y = element_text(face="bold", color = 'black'))
+
+ggplot(data = east.re, aes(x = as.Date(date, '%m/%d/%Y'), y = HDWI)) + 
+  scale_shape_manual(values = c(20, 24)) + 
+  ggtitle("Reanalysis HDWI (closest to fire starting location) Values for \n Dates Surrounding the East Troublesome Fire") + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q95((east_2020[245:335,])$HDWI), ymax = 280, fill = '>95'), alpha = 0.6) +
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q75((east_2020[245:335,])$HDWI), ymax = q95((east_2020[245:335,])$HDWI), fill = '75-95'), alpha = 0.6) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = median((east_2020[245:335,])$HDWI), ymax = q75((east_2020[245:335,])$HDWI), fill = '50-75'), alpha = 0.55) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q25((east_2020[245:335,])$HDWI), ymax = median((east_2020[245:335,])$HDWI), fill = '25-50'), alpha = 0.55) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q05((east_2020[245:335,])$HDWI), ymax = q25((east_2020[245:335,])$HDWI), fill = '5-25'), alpha = 0.5) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = 0, ymax = q05((east_2020[245:335,])$HDWI), fill = '<5'), alpha = 0.5) + 
+  scale_fill_manual(breaks = c('>95', '75-95', "50-75", '25-50', '5-25', '<5'), values = c('>95'='darkred', '75-95'='firebrick3', "50-75"='orangered3', '25-50'='darkorange2', '5-25'='orange', '<5'='gold')) + 
+  geom_line(alpha = 0.7, size = .8) + geom_point(aes(shape = fire, size = fire), fill = 'red2', stroke = 1) + scale_size_manual(values = c(2, 3.5)) + theme_bw() + 
+   scale_x_continuous(minor_breaks = 0, n.breaks = nrow(east.obs), labels=format(as.Date(east.obs$Date, '%m/%d/%Y'), format="%m/%d")) + theme(axis.text.x = element_text(angle = 30)) +
+ labs(x = 'Date in October 2020', y = 'HDWI', color = NULL, shape = NULL, fill = 'Seasonal HDWI Percentile') + guides(color = 'none', shape = 'none', size = 'none', fill = guide_legend(override.aes = list(alpha = 0.15))) + theme(legend.title= element_text(size=9.5)) + 
+  theme(axis.text.x = element_text(face="bold", color = 'black')) + 
+  theme(axis.text.y = element_text(face="bold", color = 'black'))
+```
+
+Cameron Peak fire (Aug. 13, 2020), Summer 2020 
+
+```{r}
+cameron.obs <- obs_hdwi[6795:6805,] %>% mutate(fire = ifelse(Date == '8/13/2020', 'Cam Fire Start Date', 0))
+```
+
+```{r}
+ggplot(data = cameron.obs, aes(x = as.Date(Date, '%m/%d/%Y'), y = HDW)) +
+  #scale_color_manual(values = c('black', 'red3')) + 
+  scale_shape_manual(values = c(20, 24)) + 
+ggtitle("Observed HDWI Values for Dates Surrounding the \n Cameron Peak Fire") + 
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = q95((obs_hdwi[6727:6818,])$HDW), ymax = 1100, fill = '>95'), alpha = 0.6) +
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = q75((obs_hdwi[6727:6818,])$HDW), ymax = q95((obs_hdwi[6727:6818,])$HDW), fill = '75-95'), alpha = 0.6) + 
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = median((obs_hdwi[6727:6818,])$HDW), ymax = q75((obs_hdwi[6727:6818,])$HDW), fill = '50-75'), alpha = 0.55) + 
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = q25((obs_hdwi[6727:6818,])$HDW), ymax = median((obs_hdwi[6727:6818,])$HDW), fill = '25-50'), alpha = 0.5) + 
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = q05((obs_hdwi[6727:6818,])$HDW), ymax = q25((obs_hdwi[6727:6818,])$HDW), fill = '5-25'), alpha = 0.5) + 
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = 0, ymax = q05((obs_hdwi[6727:6818,])$HDW), fill = '<5'), alpha = 0.45) +
+  scale_fill_manual(breaks = c('>95', '75-95', "50-75", '25-50', '5-25', '<5'), values = c('>95'='darkred', '75-95'='firebrick3', "50-75"='orangered3', '25-50'='darkorange2', '5-25'='orange', '<5'='gold')) + 
+  geom_line(alpha = 0.7, size = .8) + geom_point(aes(shape = fire, size = fire), fill = 'red2', stroke = 1) + scale_size_manual(values = c(2, 3.5)) + theme_bw() + 
+   scale_x_continuous(minor_breaks = 0, n.breaks = nrow(cameron.obs), labels=format(as.Date(cameron.obs$Date, '%m/%d/%Y'), format="%m/%d")) + theme(axis.text.x = element_text(angle = 30)) +
+ labs(x = 'Date in August 2020', y = 'HDWI', color = NULL, shape = NULL, fill = 'Seasonal HDWI Percentile') + guides(color = 'none', shape = 'none', size = 'none', fill = guide_legend(override.aes = list(alpha = 0.15))) + theme(legend.title= element_text(size=9.5)) + 
+  theme(axis.text.x = element_text(face="bold", color = 'black')) + 
+  theme(axis.text.y = element_text(face="bold", color = 'black'))
+```
+
+```{r}
+re2020 <- nc_open('CO2020.nc')
+ncvar_get(re2020, 'longitude')[15]
+ncvar_get(re2020, 'latitude')[3]
+
+#tower
+tower_u100 <- ncvar_get(re2020, 'u100')[16, 5,] #all u100 values for the tower coordinates 
+tower_v100 <- ncvar_get(re2020, 'v100')[16, 5,] #etc
+tower_u10 <- ncvar_get(re2020, 'u10')[16, 5,]
+tower_v10 <- ncvar_get(re2020, 'v10')[16, 5,]
+data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+data1$time1 = ncvar_get(re2020, "time")
+data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+data1$dew_point = ncvar_get(re2020, 'd2m')[16, 5,]
+data1$temp = ncvar_get(re2020, 't2m')[16, 5,]
+tower_2020 <- data1 %>%
+  mutate(time2 = time1 - 1069440) %>%
+  mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+  mutate(day = floor(time2/24) + 1) %>%
+  mutate(hour = time2 %% 24) %>%
+  mutate(max_wind = pmax(wind10, wind100)) %>%
+  mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+  select(-time2, -day, -time1) %>%
+  group_by(date) %>% summarize_at(c('VPD_hPa','max_wind', 'temp'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+tower_2020
+
+#Fire
+tower_u100 <- ncvar_get(re2020, 'u100')[15,3,] #all u100 values for the tower coordinates 
+tower_v100 <- ncvar_get(re2020, 'v100')[15,3,] #etc
+tower_u10 <- ncvar_get(re2020, 'u10')[15,3,]
+tower_v10 <- ncvar_get(re2020, 'v10')[15,3,]
+data1 <- data.frame(matrix(nrow = 366*24, ncol = 5))
+colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+data1$time1 = ncvar_get(re2020, "time")
+data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+data1$dew_point = ncvar_get(re2020, 'd2m')[15,3,]
+data1$temp = ncvar_get(re2020, 't2m')[15,3,]
+cameron_2020 <- data1 %>%
+  mutate(time2 = time1 - 1069440) %>%
+  mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+  mutate(day = floor(time2/24) + 1) %>%
+  mutate(hour = time2 %% 24) %>%
+  mutate(max_wind = pmax(wind10, wind100)) %>%
+  mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+  select(-time2, -day, -time1) %>%
+  group_by(date) %>% summarize_at(c('VPD_hPa','max_wind', 'temp'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+cameron_2020
+```
+
+```{r}
+cameron.tower <- tower_2020[221:231,] %>% mutate(fire = ifelse(date == '2020-8-13', 'cameron Fire Start Date', 0))
+cameron.re <- cameron_2020[221:231,] %>% mutate(fire = ifelse(date == '2020-8-13', 'cameron Fire Start Date', 0))
+```
+
+```{r}
+ggplot(data = cameron.tower, aes(x = as.Date(date, '%m/%d/%Y'), y = HDWI)) + 
+  scale_shape_manual(values = c(20, 24)) + 
+  ggtitle("Reanalysis HDWI (coordinates closest to NREL) Values for \n Dates Surrounding the Cameron Peak Fire") + 
+ geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q95((tower_2020[153:244,])$HDWI), ymax = 380, fill = '>95'), alpha = 0.6) +
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q75((tower_2020[153:244,])$HDWI), ymax = q95((tower_2020[153:244,])$HDWI), fill = '75-95'), alpha = 0.6) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = median((tower_2020[153:244,])$HDWI), ymax = q75((tower_2020[153:244,])$HDWI), fill = '50-75'), alpha = 0.55) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q25((tower_2020[153:244,])$HDWI), ymax = median((tower_2020[153:244,])$HDWI), fill = '25-50'), alpha = 0.55) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q05((tower_2020[153:244,])$HDWI), ymax = q25((tower_2020[153:244,])$HDWI), fill = '5-25'), alpha = 0.5) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = 0, ymax = q05((tower_2020[153:244,])$HDWI), fill = '<5'), alpha = 0.5) +
+  scale_fill_manual(breaks = c('>95', '75-95', "50-75", '25-50', '5-25', '<5'), values = c('>95'='darkred', '75-95'='firebrick3', "50-75"='orangered3', '25-50'='darkorange2', '5-25'='orange', '<5'='gold')) + 
+  geom_line(alpha = 0.7, size = .8) + geom_point(aes(shape = fire, size = fire), fill = 'red2', stroke = 1) + scale_size_manual(values = c(2, 3.5)) + theme_bw() + 
+   scale_x_continuous(minor_breaks = 0, n.breaks = nrow(cameron.obs), labels=format(as.Date(cameron.obs$Date, '%m/%d/%Y'), format="%m/%d")) + theme(axis.text.x = element_text(angle = 30)) +
+ labs(x = 'Date in October 2020', y = 'HDWI', color = NULL, shape = NULL, fill = 'Seasonal HDWI Percentile') + guides(color = 'none', shape = 'none', size = 'none', fill = guide_legend(override.aes = list(alpha = 0.15))) + theme(legend.title= element_text(size=9.5)) + 
+  theme(axis.text.x = element_text(face="bold", color = 'black')) + 
+  theme(axis.text.y = element_text(face="bold", color = 'black'))
+
+ggplot(data = cameron.re, aes(x = as.Date(date, '%m/%d/%Y'), y = HDWI)) + 
+  scale_shape_manual(values = c(20, 24)) + 
+  ggtitle("Reanalysis HDWI (closest to fire starting location) Values for \n Dates Surrounding the Cameron Peak Fire") + 
+ geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q95((cameron_2020[153:244,])$HDWI), ymax = 300, fill = '>95'), alpha = 0.6) +
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q75((cameron_2020[153:244,])$HDWI), ymax = q95((cameron_2020[153:244,])$HDWI), fill = '75-95'), alpha = 0.6) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = median((cameron_2020[153:244,])$HDWI), ymax = q75((cameron_2020[153:244,])$HDWI), fill = '50-75'), alpha = 0.55) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q25((cameron_2020[153:244,])$HDWI), ymax = median((cameron_2020[153:244,])$HDWI), fill = '25-50'), alpha = 0.55) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q05((cameron_2020[153:244,])$HDWI), ymax = q25((cameron_2020[153:244,])$HDWI), fill = '5-25'), alpha = 0.5) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = 0, ymax = q05((cameron_2020[153:244,])$HDWI), fill = '<5'), alpha = 0.5) +
+  scale_fill_manual(breaks = c('>95', '75-95', "50-75", '25-50', '5-25', '<5'), values = c('>95'='darkred', '75-95'='firebrick3', "50-75"='orangered3', '25-50'='darkorange2', '5-25'='orange', '<5'='gold')) + 
+  geom_line(alpha = 0.7, size = .8) + geom_point(aes(shape = fire, size = fire), fill = 'red2', stroke = 1) + scale_size_manual(values = c(2, 3.5)) + theme_bw() + 
+   scale_x_continuous(minor_breaks = 0, n.breaks = nrow(cameron.obs), labels=format(as.Date(cameron.obs$Date, '%m/%d/%Y'), format="%m/%d")) + theme(axis.text.x = element_text(angle = 30)) +
+ labs(x = 'Date in August 2020', y = 'HDWI', color = NULL, shape = NULL, fill = 'Seasonal HDWI Percentile') + guides(color = 'none', shape = 'none', size = 'none', fill = guide_legend(override.aes = list(alpha = 0.15))) + theme(legend.title= element_text(size=9.5)) + 
+  theme(axis.text.x = element_text(face="bold", color = 'black')) + 
+  theme(axis.text.y = element_text(face="bold", color = 'black'))
+```
+
+Marshall Fire (Dec 30, 2021), winter 2021-22
+
+```{r}
+marshall.obs <- obs_hdwi[7299:7309,] %>% mutate(fire = ifelse(Date == '12/30/2021', 'Marshall Fire Start Date', 0))
+```
+
+```{r}
+ggplot(data = marshall.obs, aes(x = as.Date(Date, '%m/%d/%Y'), y = HDW)) +
+  #scale_color_manual(values = c('black', 'red3')) + 
+  scale_shape_manual(values = c(20, 24)) + 
+ggtitle("Observed HDWI Values for Dates Surrounding the Marshall Fire") + 
+geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = q95((obs_hdwi[7275:7364,])$HDW), ymax = 400, fill = '>95'), alpha = 0.6) +
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = q75((obs_hdwi[7275:7364,])$HDW), ymax = q95((obs_hdwi[7275:7364,])$HDW), fill = '75-95'), alpha = 0.6) + 
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = median((obs_hdwi[7275:7364,])$HDW), ymax = q75((obs_hdwi[7275:7364,])$HDW), fill = '50-75'), alpha = 0.55) + 
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = q25((obs_hdwi[7275:7364,])$HDW), ymax = median((obs_hdwi[7275:7364,])$HDW), fill = '25-50'), alpha = 0.5) + 
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = q05((obs_hdwi[7275:7364,])$HDW), ymax = q25((obs_hdwi[7275:7364,])$HDW), fill = '5-25'), alpha = 0.5) + 
+  geom_ribbon(aes(x = as.Date(Date, '%m/%d/%Y'), ymin = 0, ymax = q05((obs_hdwi[7275:7364,])$HDW), fill = '<5'), alpha = 0.45) +
+  scale_fill_manual(breaks = c('>95', '75-95', "50-75", '25-50', '5-25', '<5'), values = c('>95'='darkred', '75-95'='firebrick3', "50-75"='orangered3', '25-50'='darkorange2', '5-25'='orange', '<5'='gold')) + 
+  geom_line(alpha = 0.7, size = .8) + geom_point(aes(shape = fire, size = fire), fill = 'red2', stroke = 1) + scale_size_manual(values = c(2, 3.5)) + theme_bw() + 
+   scale_x_continuous(minor_breaks = 0, n.breaks = nrow(marshall.obs), labels=format(as.Date(marshall.obs$Date, '%m/%d/%Y'), format="%m/%d")) + theme(axis.text.x = element_text(angle = 30)) +
+ labs(x = 'Date in December 2021 - January 2022', y = 'HDWI', color = NULL, shape = NULL, fill = 'Seasonal HDWI Percentile') + guides(color = 'none', shape = 'none', size = 'none', fill = guide_legend(override.aes = list(alpha = 0.15))) + theme(legend.title= element_text(size=9.5)) + 
+  theme(axis.text.x = element_text(face="bold", color = 'black')) + 
+  theme(axis.text.y = element_text(face="bold", color = 'black'))
+```
+
+```{r}
+re2021 <- nc_open('CO2021.nc')
+re2022 <- nc_open('CO2022.nc')
+
+#tower and fire are at the same closest coordinates
+tower_u100 <- ncvar_get(re2021, 'u100')[16, 5,] #all u100 values for the tower coordinates 
+tower_v100 <- ncvar_get(re2021, 'v100')[16, 5,] #etc
+tower_u10 <- ncvar_get(re2021, 'u10')[16, 5,]
+tower_v10 <- ncvar_get(re2021, 'v10')[16, 5,]
+data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+data1$time1 = ncvar_get(re2021, "time")
+data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+data1$dew_point = ncvar_get(re2021, 'd2m')[16, 5,]
+data1$temp = ncvar_get(re2021, 't2m')[16, 5,]
+tower_2021 <- data1 %>%
+  mutate(time2 = time1 - 1069440) %>%
+  mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+  mutate(day = floor(time2/24) + 1) %>%
+  mutate(hour = time2 %% 24) %>%
+  mutate(max_wind = pmax(wind10, wind100)) %>%
+  mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+  select(-time2, -day, -time1) %>%
+  group_by(date) %>% summarize_at(c('VPD_hPa','max_wind', 'temp'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+tower_2021
+
+tower_u100 <- ncvar_get(re2022, 'u100')[16, 5,] #all u100 values for the tower coordinates 
+tower_v100 <- ncvar_get(re2022, 'v100')[16, 5,] #etc
+tower_u10 <- ncvar_get(re2022, 'u10')[16, 5,]
+tower_v10 <- ncvar_get(re2022, 'v10')[16, 5,]
+data1 <- data.frame(matrix(nrow = 365*24, ncol = 5))
+colnames(data1) <- c('time1', 'wind10', 'wind100', 'dew_point', 'temp')
+data1$time1 = ncvar_get(re2022, "time")
+data1$wind10 = sqrt(tower_u10^2 + tower_v10^2)
+data1$wind100 = sqrt(tower_u100^2 + tower_v100^2)
+data1$dew_point = ncvar_get(re2022, 'd2m')[16, 5,]
+data1$temp = ncvar_get(re2022, 't2m')[16, 5,]
+tower_2022 <- data1 %>%
+  mutate(time2 = time1 - 1069440) %>%
+  mutate(VPD_hPa = 6.113*exp(5423*(1/273.15 - 1/(temp))) - 0.6113*exp(5423*(1/273.15 - 1/(dew_point)))) %>%
+  mutate(day = floor(time2/24) + 1) %>%
+  mutate(hour = time2 %% 24) %>%
+  mutate(max_wind = pmax(wind10, wind100)) %>%
+  mutate(date = as.Date('12/31/2021', format="%m/%d/%Y") + day) %>%
+  select(-time2, -day, -time1) %>%
+  group_by(date) %>% summarize_at(c('VPD_hPa','max_wind', 'temp'),max) %>% mutate(HDWI = max_wind*VPD_hPa)
+tower_2022
+```
+
+```{r}
+winter21 <- rbind(tower_2021, tower_2022)[335:424,]
+marshall.re <- rbind(tower_2021, tower_2022)[359:369,] %>% mutate(fire = ifelse(date == '2021-12-30', 'Marshall Fire Start Date', 0))
+```
+
+```{r}
+ggplot(data = marshall.re, aes(x = as.Date(date, '%m/%d/%Y'), y = HDWI)) + 
+  scale_shape_manual(values = c(20, 24)) + 
+  ggtitle("Reanalysis HDWI Values for Dates Surrounding the Marshall Fire") + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q95(winter21$HDWI), ymax = 150, fill = '>95'), alpha = 0.6) +
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q75(winter21$HDWI), ymax = q95(winter21$HDWI), fill = '75-95'), alpha = 0.6) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = median(winter21$HDWI), ymax = q75(winter21$HDWI), fill = '50-75'), alpha = 0.55) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q25(winter21$HDWI), ymax = median(winter21$HDWI), fill = '25-50'), alpha = 0.55) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = q05(winter21$HDWI), ymax = q25(winter21$HDWI), fill = '5-25'), alpha = 0.5) + 
+  geom_ribbon(aes(x = as.Date(date, '%m/%d/%Y'), ymin = 0, ymax = q05(winter21$HDWI), fill = '<5'), alpha = 0.5) + 
+  scale_fill_manual(breaks = c('>95', '75-95', "50-75", '25-50', '5-25', '<5'), values = c('>95'='darkred', '75-95'='firebrick3', "50-75"='orangered3', '25-50'='darkorange2', '5-25'='orange', '<5'='gold')) + 
+  geom_line(alpha = 0.7, size = .8) + geom_point(aes(shape = fire, size = fire), fill = 'red2', stroke = 1) + scale_size_manual(values = c(2, 3.5)) + theme_bw() + 
+   scale_x_continuous(minor_breaks = 0, n.breaks = nrow(marshall.obs), labels=format(as.Date(marshall.obs$Date, '%m/%d/%Y'), format="%m/%d")) + theme(axis.text.x = element_text(angle = 30)) +
+ labs(x = 'Date in August 2020', y = 'HDWI', color = NULL, shape = NULL, fill = 'Seasonal HDWI Percentile') + guides(color = 'none', shape = 'none', size = 'none', fill = guide_legend(override.aes = list(alpha = 0.15))) + theme(legend.title= element_text(size=9.5)) + 
+  theme(axis.text.x = element_text(face="bold", color = 'black')) + 
+  theme(axis.text.y = element_text(face="bold", color = 'black'))
+```
+
