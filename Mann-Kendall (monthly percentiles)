@@ -160,6 +160,10 @@ nov_HDWI.re <- filter(HDWI.re_pctl, month==11)
 dec_HDWI.re <- filter(HDWI.re_pctl, month==12)
 ```
 
+```{r}
+save(jan_HDWI.obs, feb_HDWI.obs, mar_HDWI.obs, apr_HDWI.obs, may_HDWI.obs, jun_HDWI.obs, jul_HDWI.obs, aug_HDWI.obs, sep_HDWI.obs, oct_HDWI.obs, nov_HDWI.obs, dec_HDWI.obs, jan_HDWI.re, feb_HDWI.re, mar_HDWI.re, apr_HDWI.re, may_HDWI.re, jun_HDWI.re, jul_HDWI.re, aug_HDWI.re, sep_HDWI.re, oct_HDWI.re, nov_HDWI.re, dec_HDWI.refile = "HDWIpctl.RData")
+```
+
 OBSERVATIONAL TABLES
 
 ```{r results = FALSE}
