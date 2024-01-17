@@ -1,0 +1,138 @@
+```{r}
+library(dplyr)
+library(kableExtra)
+library(ggplot2)
+```
+
+```{r}
+obs <- read.csv('OBSERVATIONAL-HDWI-TITLE.csv')
+re <- read.csv('REANALYSIS-HDWI-TITLE.csv')
+```
+
+```{r}
+cor((re[22647:30316,])$HDWI, obs$HDW, method = 'spearman')
+cor((re[22647:30316,])$max_wind, obs$DailyMax, method = 'spearman')
+cor((re[22647:30316,])$VPD_hPa, obs$VPD_2m_hPa, method = 'spearman')
+```
+
+```{r}
+obs.decomp <- decompose(ts(obs$HDW,start=c(2002,1,1),frequency=365.25))
+re.decomp <- decompose(ts(re[22647:30316,]$HDWI,start=c(2002,1,1),frequency=365.25)) #21 years of reanalysis data
+```
+
+```{r}
+cor(na.omit(obs.decomp$trend), na.omit(re.decomp$trend), method = 'spearman')
+```
+
+```{r}
+HDWIpctls <- load('HDWIpctl.RData') 
+```
+
+```{r}
+corvals <- data.frame(matrix(nrow = 12, ncol = 5), row.names = c('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'))
+colnames(corvals) = c('5th Percentile','25th Percentile','50th Percentile','75th Percentile','95th Percentile')
+```
+
+```{r}
+corvals[1,1] <- cor(jan_HDWI.obs$HDW_5, (jan_HDWI.re[63:83,])$HDW_5, method = 'spearman')
+corvals[1,2] <- cor(jan_HDWI.obs$HDW_25, (jan_HDWI.re[63:83,])$HDW_25, method = 'spearman')
+corvals[1,3] <- cor(jan_HDWI.obs$HDW_50, (jan_HDWI.re[63:83,])$HDW_50, method = 'spearman')
+corvals[1,4] <- cor(jan_HDWI.obs$HDW_75, (jan_HDWI.re[63:83,])$HDW_75, method = 'spearman')
+corvals[1,5] <- cor(jan_HDWI.obs$HDW_95, (jan_HDWI.re[63:83,])$HDW_95, method = 'spearman')
+```
+
+```{r}
+corvals[2,1] <- cor(feb_HDWI.obs$HDW_5, (feb_HDWI.re[63:83,])$HDW_5, method = 'spearman')
+corvals[2,2] <- cor(feb_HDWI.obs$HDW_25, (feb_HDWI.re[63:83,])$HDW_25, method = 'spearman')
+corvals[2,3] <- cor(feb_HDWI.obs$HDW_50, (feb_HDWI.re[63:83,])$HDW_50, method = 'spearman')
+corvals[2,4] <- cor(feb_HDWI.obs$HDW_75, (feb_HDWI.re[63:83,])$HDW_75, method = 'spearman')
+corvals[2,5] <- cor(feb_HDWI.obs$HDW_95, (feb_HDWI.re[63:83,])$HDW_95, method = 'spearman')
+```
+
+```{r}
+corvals[3,1] <- cor(mar_HDWI.obs$HDW_5, (mar_HDWI.re[63:83,])$HDW_5, method = 'spearman')
+corvals[3,2] <- cor(mar_HDWI.obs$HDW_25, (mar_HDWI.re[63:83,])$HDW_25, method = 'spearman')
+corvals[3,3] <- cor(mar_HDWI.obs$HDW_50, (mar_HDWI.re[63:83,])$HDW_50, method = 'spearman')
+corvals[3,4] <- cor(mar_HDWI.obs$HDW_75, (mar_HDWI.re[63:83,])$HDW_75, method = 'spearman')
+corvals[3,5] <- cor(mar_HDWI.obs$HDW_95, (mar_HDWI.re[63:83,])$HDW_95, method = 'spearman')
+```
+
+```{r}
+corvals[4,1] <- cor(apr_HDWI.obs$HDW_5, (apr_HDWI.re[63:83,])$HDW_5, method = 'spearman')
+corvals[4,2] <- cor(apr_HDWI.obs$HDW_25, (apr_HDWI.re[63:83,])$HDW_25, method = 'spearman')
+corvals[4,3] <- cor(apr_HDWI.obs$HDW_50, (apr_HDWI.re[63:83,])$HDW_50, method = 'spearman')
+corvals[4,4] <- cor(apr_HDWI.obs$HDW_75, (apr_HDWI.re[63:83,])$HDW_75, method = 'spearman')
+corvals[4,5] <- cor(apr_HDWI.obs$HDW_95, (apr_HDWI.re[63:83,])$HDW_95, method = 'spearman')
+```
+
+```{r}
+corvals[5,1] <- cor(may_HDWI.obs$HDW_5, (may_HDWI.re[63:83,])$HDW_5, method = 'spearman')
+corvals[5,2] <- cor(may_HDWI.obs$HDW_25, (may_HDWI.re[63:83,])$HDW_25, method = 'spearman')
+corvals[5,3] <- cor(may_HDWI.obs$HDW_50, (may_HDWI.re[63:83,])$HDW_50, method = 'spearman')
+corvals[5,4] <- cor(may_HDWI.obs$HDW_75, (may_HDWI.re[63:83,])$HDW_75, method = 'spearman')
+corvals[5,5] <- cor(may_HDWI.obs$HDW_95, (may_HDWI.re[63:83,])$HDW_95, method = 'spearman')
+```
+
+```{r}
+corvals[6,1] <- cor(jun_HDWI.obs$HDW_5, (jun_HDWI.re[63:83,])$HDW_5, method = 'spearman')
+corvals[6,2] <- cor(jun_HDWI.obs$HDW_25, (jun_HDWI.re[63:83,])$HDW_25, method = 'spearman')
+corvals[6,3] <- cor(jun_HDWI.obs$HDW_50, (jun_HDWI.re[63:83,])$HDW_50, method = 'spearman')
+corvals[6,4] <- cor(jun_HDWI.obs$HDW_75, (jun_HDWI.re[63:83,])$HDW_75, method = 'spearman')
+corvals[6,5] <- cor(jun_HDWI.obs$HDW_95, (jun_HDWI.re[63:83,])$HDW_95, method = 'spearman')
+```
+
+```{r}
+corvals[7,1] <- cor(jul_HDWI.obs$HDW_5, (jul_HDWI.re[63:83,])$HDW_5, method = 'spearman')
+corvals[7,2] <- cor(jul_HDWI.obs$HDW_25, (jul_HDWI.re[63:83,])$HDW_25, method = 'spearman')
+corvals[7,3] <- cor(jul_HDWI.obs$HDW_50, (jul_HDWI.re[63:83,])$HDW_50, method = 'spearman')
+corvals[7,4] <- cor(jul_HDWI.obs$HDW_75, (jul_HDWI.re[63:83,])$HDW_75, method = 'spearman')
+corvals[7,5] <- cor(jul_HDWI.obs$HDW_95, (jul_HDWI.re[63:83,])$HDW_95, method = 'spearman')
+```
+
+```{r}
+corvals[8,1] <- cor(aug_HDWI.obs$HDW_5, (aug_HDWI.re[63:83,])$HDW_5, method = 'spearman')
+corvals[8,2] <- cor(aug_HDWI.obs$HDW_25, (aug_HDWI.re[63:83,])$HDW_25, method = 'spearman')
+corvals[8,3] <- cor(aug_HDWI.obs$HDW_50, (aug_HDWI.re[63:83,])$HDW_50, method = 'spearman')
+corvals[8,4] <- cor(aug_HDWI.obs$HDW_75, (aug_HDWI.re[63:83,])$HDW_75, method = 'spearman')
+corvals[8,5] <- cor(aug_HDWI.obs$HDW_95, (aug_HDWI.re[63:83,])$HDW_95, method = 'spearman')
+```
+
+```{r}
+corvals[9,1] <- cor(sep_HDWI.obs$HDW_5, (sep_HDWI.re[63:83,])$HDW_5, method = 'spearman')
+corvals[9,2] <- cor(sep_HDWI.obs$HDW_25, (sep_HDWI.re[63:83,])$HDW_25, method = 'spearman')
+corvals[9,3] <- cor(sep_HDWI.obs$HDW_50, (sep_HDWI.re[63:83,])$HDW_50, method = 'spearman')
+corvals[9,4] <- cor(sep_HDWI.obs$HDW_75, (sep_HDWI.re[63:83,])$HDW_75, method = 'spearman')
+corvals[9,5] <- cor(sep_HDWI.obs$HDW_95, (sep_HDWI.re[63:83,])$HDW_95, method = 'spearman')
+```
+
+```{r}
+corvals[10,1] <- cor(oct_HDWI.obs$HDW_5, (oct_HDWI.re[63:83,])$HDW_5, method = 'spearman')
+corvals[10,2] <- cor(oct_HDWI.obs$HDW_25, (oct_HDWI.re[63:83,])$HDW_25, method = 'spearman')
+corvals[10,3] <- cor(oct_HDWI.obs$HDW_50, (oct_HDWI.re[63:83,])$HDW_50, method = 'spearman')
+corvals[10,4] <- cor(oct_HDWI.obs$HDW_75, (oct_HDWI.re[63:83,])$HDW_75, method = 'spearman')
+corvals[10,5] <- cor(oct_HDWI.obs$HDW_95, (oct_HDWI.re[63:83,])$HDW_95, method = 'spearman')
+```
+
+```{r}
+corvals[11,1] <- cor(nov_HDWI.obs$HDW_5, (nov_HDWI.re[63:83,])$HDW_5, method = 'spearman')
+corvals[11,2] <- cor(nov_HDWI.obs$HDW_25, (nov_HDWI.re[63:83,])$HDW_25, method = 'spearman')
+corvals[11,3] <- cor(nov_HDWI.obs$HDW_50, (nov_HDWI.re[63:83,])$HDW_50, method = 'spearman')
+corvals[11,4] <- cor(nov_HDWI.obs$HDW_75, (nov_HDWI.re[63:83,])$HDW_75, method = 'spearman')
+corvals[11,5] <- cor(nov_HDWI.obs$HDW_95, (nov_HDWI.re[63:83,])$HDW_95, method = 'spearman')
+```
+
+```{r}
+corvals[12,1] <- cor(dec_HDWI.obs$HDW_5, (dec_HDWI.re[63:83,])$HDW_5, method = 'spearman')
+corvals[12,2] <- cor(dec_HDWI.obs$HDW_25, (dec_HDWI.re[63:83,])$HDW_25, method = 'spearman')
+corvals[12,3] <- cor(dec_HDWI.obs$HDW_50, (dec_HDWI.re[63:83,])$HDW_50, method = 'spearman')
+corvals[12,4] <- cor(dec_HDWI.obs$HDW_75, (dec_HDWI.re[63:83,])$HDW_75, method = 'spearman')
+corvals[12,5] <- cor(dec_HDWI.obs$HDW_95, (dec_HDWI.re[63:83,])$HDW_95, method = 'spearman')
+```
+
+```{r}
+round(corvals, 4) %>% 
+  mutate_all(~cell_spec(.x, bold = ifelse(.x > .7, T, F), italic = ifelse(.x < .7 & .x > .5, T, F), color = 'black')) %>%
+  kable(align = 'c', caption = 'Table of HDWI Correlation Values between Observational and Reanalysis Data', escape = FALSE, booktabs = T, linesep = "") %>%
+    kable_styling()   
+```
+
